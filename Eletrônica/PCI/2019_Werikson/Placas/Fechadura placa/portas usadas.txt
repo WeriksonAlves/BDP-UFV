@@ -1,0 +1,13 @@
+/* Definição das portas utilizadas
+   Sensor RFID
+     RST => D9
+     SDA => D10
+     MOSI => D11
+     MISO => D12
+     SCK => D13
+   
+   * Leds indicação
+    Vermelho => D4 (Sinaliza entrada permitida)
+    Verde => D2 (Sinaliza entrada não permitida)
+  Buzzer => D5  
+  Relé => D3
