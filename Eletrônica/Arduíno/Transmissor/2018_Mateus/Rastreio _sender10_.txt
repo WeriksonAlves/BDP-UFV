@@ -1,0 +1,41 @@
+vold loop:
+Se "Lista" nao for vazia:
+	dados é uma variavel tipo string que recebe o conteudo ate o caracter que encerra a busca.
+
+	Se comprimento dos dados for (BUFFER_SIZE -1):
+		O transmissor para de receber informações
+		
+		Se contTime for false:
+			Imprime na tela o tempo de perda em miliseg
+			Atribui false ao conTime
+		showTime foi atibuido true e timetotal recebe o tempo total em milis
+		Incrementa 1 ao contSendPacks e retorna o valor antigo
+		
+		Imprime 'dados' saltando uma linha
+
+		Imprime a velocidade armazenada no vetor pack1 (referente ao primeiro robo) originalmente
+		
+		*Atribuição de novos valores para as velocidades
+		*Se forem menores que zero:
+		*	Soma-se mais 256 as suas velocidades
+		*E imprime na tela seus novos valores
+		*ok recebe 0 ou 1
+		*Se ok for True:
+		*	Imprime pack1 ok
+		*Caso contrario:
+		*	Imprime pack1 falhou
+		*Esse procedimento é repetido, ao todo, 3 vezes uma para cada rôbo.
+		
+		O transmissor volta a receber os dados
+	Caso contrario:
+		Se contTime não for False:
+			Time = Ao tempo em mili segundos
+			contTime = 1
+		Incrementa 1 ao contLostPacks e retorna o valor antigo
+		Imprime na tela os pacotes perdidos
+Se tempo em (milis. - tempo total) > 2000 && showtotal:
+	Imprime os pacotes perdidos
+	Imprime os pacotes enviados
+	Zera o vetor dos pacotes enviados e recebidos, e zera o showtotal
+	
+	Aguarda 90 miliseg.
