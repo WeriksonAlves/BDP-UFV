@@ -1,9 +1,9 @@
 #include <Arduino.h>
 ////////////////////////////////////////////////////////////////////////////
 /*Autor: Wérikson Alves
-  Código para transmissão do pacote de dados por rádio para BDP - UFV
+  Código de transmissão do pacote de dados por rádio para BDP - UFV
   Data de início: 28/04/2022
-  Data de finalização: ??/??/2022
+  Data de finalização: 28/04/2022
   Versão: 22.1
   Descrição da alteração: Foi preenchido os comentarios e ajustado o código
 */
@@ -36,8 +36,9 @@ bool ok = 0;                           //Variável para verificar se o pacote
 // foi enviado com sucesso
 String dados;                          //Variável para armazenar os dados do
 // pacote (recebe o conteudo ate o caracter que encerra a busca)
-int i;
-int vetorDeDados[6];
+int i;                                 //Variável para contar o número de 
+// pacotes enviados
+int vetorDeDados[6];                   //Vetor para armazenar os dados do pacote
 
 ////////////////////////////////////////////////////////////////////////////
 // Definição de protótipos de funções:
@@ -48,7 +49,6 @@ void setup() { //Função setup
   Serial.begin(115200); // Abre a porta serial com o 'Baudrate' passado como
   // parâmetro
 
-  //////////////////////////////////////////////////////////////////////////
   // Setup das constantes:
   pack1.id = 1; //Define o id do pacote
   pack2.id = 2; //Define o id do pacote
