@@ -1,6 +1,7 @@
 from tkinter import*
 import sys
 
+
 class myApp(object):
     def __init__(self, **kw):
         #insira toda a inicialização aqui
