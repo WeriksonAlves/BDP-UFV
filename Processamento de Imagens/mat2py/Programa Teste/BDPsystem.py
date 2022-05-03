@@ -60,7 +60,7 @@ class myApp(object):
         pass
     
     def finaliza_software(self):
-        self.root.quit()       
+        self.root.destroy()     
      
          
     def mnu_about(self):
