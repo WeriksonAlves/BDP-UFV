@@ -4,8 +4,9 @@
 
 from tkinter import*
 import sys
-from Funcao_Camera import*
-
+from Camera_Funcs import*
+import cv2
+import threading
 
 class myApp(object):
     def __init__(self, **kw):
@@ -43,9 +44,9 @@ class myApp(object):
 
         #Câmera 
         cameramenu = Menu(menubar, tearoff=0)
-        cameramenu.add_command(label="Conectar", command=self.mnu_about)
+        cameramenu.add_command(label="Conectar", command=self.Camconectar)
         cameramenu.add_command(label="Iniciar Captura", command=self.mnu_about)
-        cameramenu.add_command(label="Abrir Preview", command=self.mnu_about)
+        cameramenu.add_command(label="Abrir Preview", command = lambda: threading.Thread(target=self.Campreview).start())
         menubar.add_cascade(label="Câmera", menu=cameramenu)
          
         comunicacaoomenu = Menu(menubar, tearoff=0)
@@ -73,7 +74,28 @@ class myApp(object):
     def create_canvas_area(self):
         pass
     
-  
+    def Camconectar(self):
+        #Para opção webcam n = 0, para realsense n = 2. Conferir gerenciador de dispositivos
+        tipo_camera = 0
+
+        #self.cam = cv2.VideoCapture(tipo_camera)
+        self.cam = cv2.VideoCapture(tipo_camera, cv2.CAP_DSHOW)#corrigi bug ao fechar aplicação
+        
+
+    def Campreview(self):
+        while True:
+            ret, frame = self.cam.read()
+            if not ret:
+                print("Câmera desativada")
+                break
+            cv2.imshow("preview", frame)
+            k = cv2.waitKey(1)
+            if (cv2.getWindowProperty("preview", cv2.WND_PROP_VISIBLE) <1):
+                break
+        cam2 = self.cam
+        cam2.release()
+        cv2.destroyAllWindows()
+
     def finaliza_software(self):
         self.root.quit()       
      
