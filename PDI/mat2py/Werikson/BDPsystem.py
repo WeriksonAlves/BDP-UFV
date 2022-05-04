@@ -1,5 +1,11 @@
+#                           PLATAFORMA BDP 2022
+#
+# Conjunto de abas que permite ao usuario ter acesso às  informações do sistema através da interface gráfica. 
+
 from tkinter import*
 import sys
+from Funcao_Camera import*
+
 
 class myApp(object):
     def __init__(self, **kw):
@@ -29,6 +35,12 @@ class myApp(object):
     
     def create_menu_bar(self):           
         menubar = Menu(self.root)
+
+        #Termina
+        terminamenu = Menu(menubar, tearoff=0)
+        terminamenu.add_command(label="Exit", command=self.finaliza_software)
+        menubar.add_cascade(label="Sair", menu=terminamenu)
+
         #Câmera 
         cameramenu = Menu(menubar, tearoff=0)
         cameramenu.add_command(label="Conectar", command=self.mnu_about)
@@ -71,12 +83,9 @@ class myApp(object):
   
      
     def execute(self):
-<<<<<<< Updated upstream:PDI/mat2py/Programa Teste/BDPsystem.py
-        self.root.mainloop()
-=======
         self.root.mainloop()
 #Colocar isto no programa principal 
-'''
+
 def main(args):
     app_proc = myApp()
     app_proc.execute()
@@ -85,5 +94,3 @@ def main(args):
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
-'''
->>>>>>> Stashed changes:PDI/mat2py/Interface/BDPsystem.py
