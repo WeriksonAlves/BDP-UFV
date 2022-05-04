@@ -1,5 +1,11 @@
+#                           PLATAFORMA BDP 2022
+#
+# Conjunto de abas que permite ao usuario ter acesso às  informações do sistema através da interface gráfica. 
+
 from tkinter import*
 import sys
+from Funcao_Camera import*
+
 
 class myApp(object):
     def __init__(self, **kw):
@@ -15,7 +21,7 @@ class myApp(object):
          
     def create_status_bar(self):
         self.status = Label(self.root,
-                               text="Welcome to myApp",
+                               text="Werikson: Atualmente trabalhando na aba camera!",
                                bd=1, relief=SUNKEN, anchor=W)
         self.status.pack(side=BOTTOM, fill=X)
     
@@ -29,9 +35,17 @@ class myApp(object):
     
     def create_menu_bar(self):           
         menubar = Menu(self.root)
+
+        #Termina
+        terminamenu = Menu(menubar, tearoff=0)
+        terminamenu.add_command(label="Exit", command=self.finaliza_software)
+        menubar.add_cascade(label="Sair", menu=terminamenu)
+
         #Câmera 
         cameramenu = Menu(menubar, tearoff=0)
-        cameramenu.add_command(label="Exit", command=self.finaliza_software)
+        cameramenu.add_command(label="Conectar", command=self.mnu_about)
+        cameramenu.add_command(label="Iniciar Captura", command=self.mnu_about)
+        cameramenu.add_command(label="Abrir Preview", command=self.mnu_about)
         menubar.add_cascade(label="Câmera", menu=cameramenu)
          
         comunicacaoomenu = Menu(menubar, tearoff=0)
@@ -59,13 +73,24 @@ class myApp(object):
     def create_canvas_area(self):
         pass
     
+  
     def finaliza_software(self):
         self.root.quit()       
      
          
     def mnu_about(self):
         pass
-    
+  
      
     def execute(self):
         self.root.mainloop()
+#Colocar isto no programa principal 
+
+def main(args):
+    app_proc = myApp()
+    app_proc.execute()
+    return 0
+ 
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
