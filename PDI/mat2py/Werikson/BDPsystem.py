@@ -4,6 +4,7 @@
 
 from tkinter import*
 import sys
+
 #from Camera_Funcs import*
 import cv2
 import threading
@@ -44,9 +45,11 @@ class myApp(object):
 
         #Câmera 
         cameramenu = Menu(menubar, tearoff=0)
+
         cameramenu.add_command(label="Conectar", command=self.Camconectar)
         cameramenu.add_command(label="Iniciar Captura", command=self.mnu_about)
         cameramenu.add_command(label="Abrir Preview", command = lambda: threading.Thread(target=self.Campreview).start())
+
         menubar.add_cascade(label="Câmera", menu=cameramenu)
          
         comunicacaoomenu = Menu(menubar, tearoff=0)
