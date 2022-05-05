@@ -4,7 +4,7 @@
 
 from tkinter import*
 import sys
-from Camera_Funcs import*
+#from Camera_Funcs import*
 import cv2
 import threading
 
