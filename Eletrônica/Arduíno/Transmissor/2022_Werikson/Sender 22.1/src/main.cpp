@@ -32,8 +32,6 @@ Pacote pack1;                          //Define o pacote 1
 Pacote pack2;                          //Define o pacote 2
 Pacote pack3;                          //Define o pacote 3
 Pacote pack4;                          //Define o pacote 4
-bool ok = 0;                           //Variável para verificar se o pacote
-// foi enviado com sucesso
 String dados;                          //Variável para armazenar os dados do
 // pacote (recebe o conteudo ate o caracter que encerra a busca)
 int i;                                 //Variável para contar o número de 
@@ -85,17 +83,17 @@ void loop() { //Função loop
       // Pacote do rôbo 1:
       pack1.vel[0] = dados[2]; if (pack1.vel[0] < 0) pack1.vel[0] = pack1.vel[0] + 256; //Define a velocidade do lado esquerdo
       pack1.vel[1] = dados[3]; if (pack1.vel[1] < 0) pack1.vel[1] = pack1.vel[1] + 256; //Define a velocidade do lado direito
-      ok = transmissor.write(&pack1, sizeof(pack1));                                    //Envia o pacote 1
-
+      while(!transmissor.write(&pack1, sizeof(pack1)));                                    //Envia o pacote 1
+      
       // Pacote do rôbo 2:
       pack2.vel[0] = dados[4]; if (pack2.vel[0] < 0) pack2.vel[0] = pack2.vel[0] + 256; //Define a velocidade do lado esquerdo
       pack2.vel[1] = dados[5]; if (pack2.vel[1] < 0) pack2.vel[1] = pack2.vel[1] + 256; //Define a velocidade do lado direito
-      ok = transmissor.write(&pack2, sizeof(pack2));                                    //Envia o pacote 2
+      while(!transmissor.write(&pack2, sizeof(pack2)));                                    //Envia o pacote 2
 
       // Pacote do rôbo 3:
       pack3.vel[0] = dados[6]; if (pack3.vel[0] < 0) pack3.vel[0] = pack3.vel[0] + 256; //Define a velocidade do lado esquerdo
       pack3.vel[1] = dados[7]; if (pack3.vel[1] < 0) pack3.vel[1] = pack3.vel[1] + 256; //Define a velocidade do lado direito
-      ok = transmissor.write(&pack3, sizeof(pack3));                                    //Envia o pacote 3
+      while(!transmissor.write(&pack3, sizeof(pack3)));                                    //Envia o pacote 3
 
       transmissor.startListening();                                                     //Reinicia o rádio de recepção
     }
@@ -119,17 +117,17 @@ void IntialMecanicRotine() { //Função treino
     // Pacote do rôbo 1:
     pack1.vel[0] = vetorDeDados[0]; if (pack1.vel[0] < 0) pack1.vel[0] = pack1.vel[0] + 256; //Define a velocidade do lado esquerdo
     pack1.vel[1] = vetorDeDados[1]; if (pack1.vel[1] < 0) pack1.vel[1] = pack1.vel[1] + 256; //Define a velocidade do lado direito
-    ok = transmissor.write(&pack1, sizeof(pack1));                                           //Envia o pacote 1
+    while(!transmissor.write(&pack1, sizeof(pack1)));                                           //Envia o pacote 1
 
     // Pacote do rôbo 2:
     pack2.vel[0] = vetorDeDados[2]; if (pack2.vel[0] < 0) pack2.vel[0] = pack2.vel[0] + 256; //Define a velocidade do lado esquerdo
     pack2.vel[1] = vetorDeDados[3]; if (pack2.vel[1] < 0) pack2.vel[1] = pack2.vel[1] + 256; //Define a velocidade do lado direito
-    ok = transmissor.write(&pack2, sizeof(pack2));                                           //Envia o pacote 2
+    while(!transmissor.write(&pack2, sizeof(pack2)));                                           //Envia o pacote 2
 
     // Pacote do rôbo 3:
     pack3.vel[0] = vetorDeDados[4]; if (pack3.vel[0] < 0) pack3.vel[0] = pack3.vel[0] + 256; //Define a velocidade do lado esquerdo
     pack3.vel[1] = vetorDeDados[5]; if (pack3.vel[1] < 0) pack3.vel[1] = pack3.vel[1] + 256; //Define a velocidade do lado direito
-    ok = transmissor.write(&pack3, sizeof(pack3));                                           //Envia o pacote 3
+    while(!transmissor.write(&pack3, sizeof(pack3)));                                           //Envia o pacote 3
 
     transmissor.startListening();                                                            //Reinicia o rádio de recepção
     delay(30);                                                                               //Delay de 30ms
