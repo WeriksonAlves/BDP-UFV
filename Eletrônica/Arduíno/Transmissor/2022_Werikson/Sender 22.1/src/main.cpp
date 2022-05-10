@@ -1,6 +1,6 @@
 #include <Arduino.h>
 ////////////////////////////////////////////////////////////////////////////
-/*Autor: Wérikson Alves
+/*Autor: Wérikson Alves e Hiago
   Código de transmissão do pacote de dados por rádio para BDP - UFV
   Data de início: 28/04/2022
   Data de finalização: 28/04/2022
