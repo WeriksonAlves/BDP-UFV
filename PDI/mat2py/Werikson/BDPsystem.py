@@ -4,7 +4,7 @@
 
 from tkinter import*
 import sys
-
+from menu_da_camera import*
 #from Camera_Funcs import*
 import cv2
 import threading
@@ -15,15 +15,15 @@ class myApp(object):
                             
         self.root = Tk()
         self.root.title("PLATAFORMA BDP 2022")
-        self.root.geometry('800x600')
-        self.create_menu_bar()
-        self.create_canvas_area()
+        self.root.geometry('300x500')
+        self.root.configure(bg='green')
         self.create_status_bar()
+        self.create_menu_button()
          
          
     def create_status_bar(self):
         self.status = Label(self.root,
-                               text="Werikson: Atualmente trabalhando na aba camera!",
+                               text="Página Geral do Sistema",
                                bd=1, relief=SUNKEN, anchor=W)
         self.status.pack(side=BOTTOM, fill=X)
     
@@ -34,81 +34,33 @@ class myApp(object):
     def set_status_bar(self, texto):
         self.status.config(text=texto)
         self.status.update_idletasks()       
-    
-    def create_menu_bar(self):           
-        menubar = Menu(self.root)
 
-        #Termina
-        terminamenu = Menu(menubar, tearoff=0)
-        terminamenu.add_command(label="Exit", command=self.finaliza_software)
-        menubar.add_cascade(label="Sair", menu=terminamenu)
+    def create_menu_button(self):
+        check_cam = Button(self.root, text= "Câmera", command = mycamera)
+        check_cam.place(height=50, width=200, x=50, y=10)
 
-        #Câmera 
-        cameramenu = Menu(menubar, tearoff=0)
+        check_cal_cor = Button(self.root, text= "Calibrar Cores")
+        check_cal_cor.place(height=50, width=200, x=50, y=70)
 
-        cameramenu.add_command(label="Conectar", command=self.Camconectar)
-        cameramenu.add_command(label="Iniciar Captura", command=self.mnu_about)
-        cameramenu.add_command(label="Abrir Preview", command = lambda: threading.Thread(target=self.Campreview).start())
+        check_cal_cam = Button(self.root, text= "Calibrar Campo")
+        check_cal_cam.place(height=50, width=200, x=50, y=130)
 
-        menubar.add_cascade(label="Câmera", menu=cameramenu)
-         
-        comunicacaoomenu = Menu(menubar, tearoff=0)
-        comunicacaoomenu.add_command(label="About", command=self.mnu_about)
-        menubar.add_cascade(label="Comunicação", menu=comunicacaoomenu)
-        
-        calibracaomenu = Menu(menubar, tearoff=0)
-        calibracaomenu.add_command(label="About", command=self.mnu_about)
-        menubar.add_cascade(label="Calibração", menu=calibracaomenu)
-        
-        campomenu = Menu(menubar, tearoff=0)
-        campomenu.add_command(label="About", command=self.mnu_about)
-        menubar.add_cascade(label="Campo", menu=campomenu)
-        
-        partidamenu = Menu(menubar, tearoff=0)
-        partidamenu.add_command(label="About", command=self.mnu_about)
-        menubar.add_cascade(label="Partida", menu=partidamenu)
-        
-        testepwmmenu = Menu(menubar, tearoff=0)
-        testepwmmenu.add_command(label="About", command=self.mnu_about)
-        menubar.add_cascade(label="TestePMW", menu=testepwmmenu)
-         
-        self.root.config(menu=menubar)
-    
-    def create_canvas_area(self):
-        pass
-    
-    def Camconectar(self):
-        #Para opção webcam n = 0, para realsense n = 2. Conferir gerenciador de dispositivos
-        tipo_camera = 0
+        check_hab_par = Button(self.root, text= "Habilitar Partida")
+        check_hab_par.place(height=50, width=200, x=50, y=190)
 
-        #self.cam = cv2.VideoCapture(tipo_camera)
-        self.cam = cv2.VideoCapture(tipo_camera, cv2.CAP_DSHOW)#corrigi bug ao fechar aplicação
-        
-
-    def Campreview(self):
-        while True:
-            ret, frame = self.cam.read()
-            if not ret:
-                print("Câmera desativada")
-                break
-            cv2.imshow("preview", frame)
-            k = cv2.waitKey(1)
-            if (cv2.getWindowProperty("preview", cv2.WND_PROP_VISIBLE) <1):
-                break
-        cam2 = self.cam
-        cam2.release()
-        cv2.destroyAllWindows()
+        btn_sair = Button(self.root, text= "Encerrar o programa", bg='grey', activebackground='red', command=self.finaliza_software)
+        btn_sair.place(height=50, width=200, x=50, y=250)
 
     def finaliza_software(self):
         self.root.quit()       
-     
-         
-    def mnu_about(self):
-        pass
-  
-     
+    
     def execute(self):
         self.root.mainloop()
+
+
+
+
+
 #Colocar isto no programa principal 
 
 def main(args):
