@@ -5,6 +5,8 @@
 from tkinter import*
 import sys
 from menu_da_camera import*
+from menu_de_calibracao import*
+
 #from Camera_Funcs import*
 import cv2
 import threading
@@ -39,7 +41,7 @@ class myApp(object):
         check_cam = Button(self.root, text= "Câmera", command = mycamera)
         check_cam.place(height=50, width=200, x=50, y=10)
 
-        check_cal_cor = Button(self.root, text= "Calibrar Cores")
+        check_cal_cor = Button(self.root, text= "Calibrar Cores", command = mycalibracor)
         check_cal_cor.place(height=50, width=200, x=50, y=70)
 
         check_cal_cam = Button(self.root, text= "Calibrar Campo")

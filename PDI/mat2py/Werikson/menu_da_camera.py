@@ -61,7 +61,7 @@ class mycamera(object):
             if (cv2.getWindowProperty("preview", cv2.WND_PROP_VISIBLE) <1):
                 break
         cam2 = self.cam
-        cam2.release()
+        #cam2.release()  #Desliga a camera
         cv2.destroyAllWindows()
   
      
