@@ -11,24 +11,30 @@ class myApp(object):
         #insira toda a inicialização aqui
                             
         self.root = Tk()
-        self.root.title("PLATAFORMA BDP 2022")
+        self.root.title("Calibrar Cores")
         self.root.geometry('940x600')
         self.create_check_bar()
         self.entry_cal()
         self.escalas()
-
- 
+        self.create_text()
+        self.create_buttons()
          
-         
-    def create_status_bar(self):
-        self.status = Label(self.root,
-                               text="Werikson: Atualmente trabalhando na aba camera!",
-                               bd=1, relief=SUNKEN, anchor=W)
-        self.status.pack(side=BOTTOM, fill=X)
+    def create_text(self):
+        text_1 = Label(self.root,text="Matriz")
+        text_1.place(height=30, width=50, x=180, y=(60))
+        text_2 = Label(self.root,text="Saturação")
+        text_2.place(height=30, width=60, x=470, y=(60))
+        text_3 = Label(self.root,text="Luminosidade")
+        text_3.place(height=30, width=80, x=750, y=(60))
+        text_4 = Label(self.root,text="Campo Segmentado:")
+        text_4.place(height=20, width=120, x=15, y=(270))
     
-    def clear_status_bar(self):
-        self.status.config(text="")
-        self.status.update_idletasks() 
+    def create_buttons(self):
+        Select_pixels = Button(self.root, text= "Selecionar Pixels")
+        Select_pixels.place(height=40, width=150, x=20, y=(200))
+
+        Save_cal = Button(self.root, text= "Selecionar Pixels")
+        Save_cal.place(height=40, width=150, x=180, y=(200))
          
     def set_status_bar(self, texto):
         self.status.config(text=texto)
@@ -58,6 +64,7 @@ class myApp(object):
 
         check_tot =  Checkbutton(self.root, text= "Total",bg= "gray")
         check_tot.place(height=50, width=120, x=820, y=(0))
+    
     def entry_cal(self):
         set_entry_m1 = Entry(self.root)
         set_entry_m1.place(height=30, width=50, x=40, y=(100))
