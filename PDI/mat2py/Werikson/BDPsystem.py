@@ -4,14 +4,15 @@
 
 from tkinter import*
 import sys
-from menu_da_camera import*
-from menu_de_calibracao import*
+from Interface_Camera import*
+from Interface_Calibra_Cor import*
+from Interface_Calibra_Campo import*
 
 #from Camera_Funcs import*
 import cv2
 import threading
 
-class myApp(object):
+class Menu_Principal(object):
     def __init__(self, **kw):
         #insira toda a inicialização aqui
                             
@@ -21,7 +22,6 @@ class myApp(object):
         self.root.configure(bg='green')
         self.create_status_bar()
         self.create_menu_button()
-         
          
     def create_status_bar(self):
         self.status = Label(self.root,
@@ -38,13 +38,13 @@ class myApp(object):
         self.status.update_idletasks()       
 
     def create_menu_button(self):
-        check_cam = Button(self.root, text= "Câmera", command = mycamera)
+        check_cam = Button(self.root, text= "Câmera", command = Menu_Camera)
         check_cam.place(height=50, width=200, x=50, y=10)
 
-        check_cal_cor = Button(self.root, text= "Calibrar Cores", command = mycalibracor)
+        check_cal_cor = Button(self.root, text= "Calibrar Cores", command = Menu_Calibra_Cor)
         check_cal_cor.place(height=50, width=200, x=50, y=70)
 
-        check_cal_cam = Button(self.root, text= "Calibrar Campo")
+        check_cal_cam = Button(self.root, text= "Calibrar Campo", command = Menu_Calibra_Campo)
         check_cal_cam.place(height=50, width=200, x=50, y=130)
 
         check_hab_par = Button(self.root, text= "Habilitar Partida")
@@ -59,14 +59,11 @@ class myApp(object):
     def execute(self):
         self.root.mainloop()
 
-
-
-
-
+#..............................................................................................................
 #Colocar isto no programa principal 
 
 def main(args):
-    app_proc = myApp()
+    app_proc = Menu_Principal()
     app_proc.execute()
     return 0
  

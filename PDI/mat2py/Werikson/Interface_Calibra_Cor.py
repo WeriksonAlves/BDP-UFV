@@ -1,7 +1,7 @@
 from tkinter import*
 import sys
 
-class mycalibracor(object):
+class Menu_Calibra_Cor(object):
     def __init__(self, **kw):
         #insira toda a inicialização aqui
                             

@@ -8,7 +8,7 @@ import sys
 import cv2
 import threading
 
-class mycamera(object):
+class Menu_Camera(object):
      
     def __init__(self, **kw):
         #insira toda a inicialização aqui
