@@ -6,7 +6,7 @@ class Menu_Calibra_Cor(object):
     def __init__(self, **kw):
         #insira toda a inicialização aqui
                             
-        self.root = Tk()
+        self.root = Toplevel()
         self.root.title("Calibrar Cores")
         self.root.geometry('940x600')
         self.create_check_bar()
