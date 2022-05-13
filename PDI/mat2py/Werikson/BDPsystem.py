@@ -52,15 +52,15 @@ class Menu_Principal(object):
 
     def create_menu_button(self): # Menu inicial do sistema
         # Abre a janela de configurações da camera
-        check_cam = Button(self.root, text= "Câmera", command = Menu_Camera) 
+        check_cam = Button(self.root, text= "Câmera", command = lambda: Menu_Camera()) 
         check_cam.place(height=50, width=200, x=50, y=10)
 
         # Abre a janela de calibração de cores
-        check_cal_cor = Button(self.root, text= "Calibrar Cores", command = Menu_Calibra_Cor)
+        check_cal_cor = Button(self.root, text= "Calibrar Cores", command = lambda: Menu_Calibra_Cor())
         check_cal_cor.place(height=50, width=200, x=50, y=70)
 
         # Abre a janela de calibração de campo
-        check_cal_cam = Button(self.root, text= "Calibrar Campo", command = Menu_Calibra_Campo)
+        check_cal_cam = Button(self.root, text= "Calibrar Campo", command = lambda: Menu_Calibra_Campo())
         check_cal_cam.place(height=50, width=200, x=50, y=130)
 
         # Abre a janela de configurações da partida

@@ -13,7 +13,7 @@ class Menu_Camera(object):
     def __init__(self, **kw):
         #insira toda a inicialização aqui
                             
-        self.root = tk.Tk()
+        self.root = Toplevel()
         self.root.title("Câmera")
         self.root.geometry('300x500')
         self.root.configure(bg='green')
@@ -23,7 +23,7 @@ class Menu_Camera(object):
          
     def create_status_bar(self):
         self.status = tk.Label(self.root,
-                               text="",
+                               text="Iniciando o sistema câmera",
                                bd=1, relief=tk.SUNKEN, anchor=tk.W)
         self.status.pack(side=tk.BOTTOM, fill=tk.X)
  
@@ -48,16 +48,16 @@ class Menu_Camera(object):
 
         #self.cam = cv2.VideoCapture(tipo_camera)
         self.cam = cv2.VideoCapture(tipo_camera, cv2.CAP_DSHOW)#corrigi bug ao fechar aplicação
-        
+
 
     def Campreview(self):
         while True:
-            ret, frame = self.cam.read()
+            ret, frame = self.cam.read() # retorna True ou False para a camera
             if not ret:
                 print("Câmera desativada")
                 break
             cv2.imshow("preview", frame)
-            k = cv2.waitKey(1)
+            k = cv2.waitKey(25) #40 fps
             if (cv2.getWindowProperty("preview", cv2.WND_PROP_VISIBLE) <1):
                 break
         cam2 = self.cam
