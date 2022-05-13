@@ -1,4 +1,5 @@
 from tkinter import*
+import tkinter as tk
 import sys
 
 class Menu_Calibra_Cor(object):
@@ -13,6 +14,20 @@ class Menu_Calibra_Cor(object):
         self.escalas()
         self.create_text()
         self.create_buttons()
+
+    def create_status_bar(self):
+        self.status = tk.Label(self.root,
+                               text="",
+                               bd=1, relief=tk.SUNKEN, anchor=tk.W)
+        self.status.pack(side=tk.BOTTOM, fill=tk.X)
+ 
+    def clear_status_bar(self):
+        self.status.config(text="")
+        self.status.update_idletasks() 
+         
+    def set_status_bar(self, texto):
+        self.status.config(text=texto)
+        self.status.update_idletasks() 
          
     def create_text(self):
         text_1 = Label(self.root,text="Matriz")
