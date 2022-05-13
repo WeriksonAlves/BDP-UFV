@@ -13,16 +13,17 @@ class Menu_Camera(object):
     def __init__(self, **kw):
         #insira toda a inicialização aqui
                             
-        self.root = Toplevel()
-        self.root.title("Câmera")
-        self.root.geometry('300x500')
-        self.root.configure(bg='green')
+        self.root_camera = Toplevel()
+        self.root_camera.title("Câmera")
+        self.root_camera.geometry('300x500')
+        self.root_camera.configure(bg='green')
         self.create_menu_button()
- 
         self.create_status_bar()
-         
+        self.execute()
+        
+
     def create_status_bar(self):
-        self.status = tk.Label(self.root,
+        self.status = tk.Label(self.root_camera,
                                text="Iniciando o sistema câmera",
                                bd=1, relief=tk.SUNKEN, anchor=tk.W)
         self.status.pack(side=tk.BOTTOM, fill=tk.X)
@@ -36,10 +37,10 @@ class Menu_Camera(object):
         self.status.update_idletasks()       
  
     def create_menu_button(self):           
-        btn_con = Button(self.root, text= "Conectar", command = self.Camconectar)
+        btn_con = Button(self.root_camera, text= "Conectar", command = self.Camconectar)
         btn_con.place(height=50, width=200, x=50, y=10)
 
-        btn_abr_pre = Button(self.root, text= "Abrir Preview", command = lambda: threading.Thread(target=self.Campreview).start())
+        btn_abr_pre = Button(self.root_camera, text= "Abrir Preview", command = lambda: threading.Thread(target=self.Campreview).start())
         btn_abr_pre.place(height=50, width=200, x=50, y=70)
  
     def Camconectar(self):
@@ -49,7 +50,7 @@ class Menu_Camera(object):
         #self.cam = cv2.VideoCapture(tipo_camera)
         self.cam = cv2.VideoCapture(tipo_camera, cv2.CAP_DSHOW)#corrigi bug ao fechar aplicação
 
-
+    
     def Campreview(self):
         while True:
             ret, frame = self.cam.read() # retorna True ou False para a camera
@@ -63,8 +64,13 @@ class Menu_Camera(object):
         cam2 = self.cam
         #cam2.release()  #Desliga a camera
         cv2.destroyAllWindows()
-  
-     
+    
     def execute(self):
-        self.root.mainloop()
+        self.root_camera.protocol("WM_DELETE_WINDOW", self.a)
+        self.root_camera.mainloop()
+
+    def a(self):
+        print("A")
+        self.root_camera.withdraw()
+        
 
