@@ -1,6 +1,6 @@
 #include <Arduino.h>
 ////////////////////////////////////////////////////////////////////////////
-/*Autor: Wérikson Alves
+/*Autor: Wérikson Alves e Hiago Batista
   Código de recepção do pacote de dados por rádio para BDP - UFV
   Data de início: 28/04/2022
   Data de finalização: ??/??/2022
@@ -16,14 +16,20 @@
 ////////////////////////////////////////////////////////////////////////////
 // Definição das portas usadas: D3, D4, D5, D9, D10
 
-#define ENABLE1 5    //Pino do PWM do motor ...
-#define ENABLE2 6    //Pino do PWM do motor ...
-#define MOTORET 1    //Pino do motor esquerdo trás
-#define MOTOREF 0    //Pino do motor esquerdo frente
+#define STBY A0
+
+#define ENABLE1 5    //Pino do PWM A do motor ...
+#define ENABLE2 6    //Pino do PWM B do motor ...
+
+#define MOTORET 2    //Pino do motor esquerdo trás
+#define MOTOREF 3    //Pino do motor esquerdo frente
+
 #define MOTORDT 7    //Pino do motor direito trásdigitalWrite(abc, HIGH);
-#define MOTORDF 8    //Pino do motor direito frentedigitalWrite(abc, HIGH);
+#define MOTORDF 4    //Pino do motor direito frentedigitalWrite(abc, HIGH);
+
 #define BIT1 A1      //Dip Switch de escolha do robô
 #define BIT2 A2      //Dip Switch de escolha do robô
+
 #define LED 4        //Pino do LED
 #define ROBOD 1      //Pino do robô
 #define TEMPO 2000   //Tempo de espera para o robô parar
@@ -57,6 +63,10 @@ void setup() { //Função setup
   pinMode(MOTORDT, OUTPUT); //Define o pino do motor direito trás como saída
   pinMode(ENABLE1, OUTPUT); //Define o pino de PWM do motor ... como saída
   pinMode(ENABLE2, OUTPUT); //Define o pino de PWM do motor ... como saída
+  pinMode(STBY, OUTPUT);    //Define o pino de standby como saída
+
+  digitalWrite(STBY, HIGH); //Liga o standby
+
 
   //Setup do Teste mecânico:
   IntialMecanicRotine();  // Teste mecânico
