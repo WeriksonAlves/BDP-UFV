@@ -18,8 +18,8 @@
 #define PWMA 5    //Pino PWMA => motor direito
 #define MTDF 1    //Pino AIN2 => direito frente
 #define MTDT 0    //Pino AIN1 => direito trás
-#define MTET 7    //Pino BIN1 => esquerdo trás
-#define MTEF 6    //Pino BIN2 => esquerdo frente
+#define MTET 8    //Pino BIN1 => esquerdo trás
+#define MTEF 7    //Pino BIN2 => esquerdo frente
 #define PWMB 6    //Pino PWMB => motor esquerdo
 #define BIT1 A1      //Dip Switch de escolha do robô
 #define BIT2 A2      //Dip Switch de escolha do robô
@@ -121,6 +121,7 @@ void loop() {
 ////////////////////////////////////////////////////////////////////////////
 // Implementação das funções
 void IntialMecanicRotine(int TEMPO){
+  delay(3000);
   AndaFrente();
   delay(TEMPO);
   DesligaMotores();
@@ -136,22 +137,22 @@ void IntialMecanicRotine(int TEMPO){
 }
 
 void EsquerdaFrente(int speed){ 
-  analogWrite(PWMA, map(speed, 150, 250, 0, 255)); 
+  analogWrite(PWMB, map(speed, 150, 250, 0, 255)); 
   digitalWrite(MTEF, HIGH); 
   digitalWrite(MTET, LOW); }
 
 void EsquerdaTras(int speed){ 
-  analogWrite(PWMA, map(speed, 149, 50, 0, 255)); 
+  analogWrite(PWMB, map(speed, 149, 50, 0, 255)); 
   digitalWrite(MTEF, LOW); 
   digitalWrite(MTET, HIGH); }
 
 void DireitaFrente(int speed){ 
-  analogWrite(PWMB, map(speed, 150, 250, 0, 255)); 
+  analogWrite(PWMA, map(speed, 150, 250, 0, 255)); 
   digitalWrite(MTDF, HIGH); 
   digitalWrite(MTDT, LOW); }
 
 void DireitaTras(int speed){ 
-  analogWrite(PWMB, map(speed, 149, 50, 0, 255)); 
+  analogWrite(PWMA, map(speed, 149, 50, 0, 255)); 
   digitalWrite(MTDF, LOW); 
   digitalWrite(MTDT, HIGH); }
 
@@ -159,7 +160,7 @@ void DesligaMotores(){ analogWrite(PWMA, 0); analogWrite(PWMB, 0); digitalWrite(
 
 void AndaFrente(){ DireitaFrente(200); EsquerdaFrente(200); }
 
-void AndaTras(){ EsquerdaTras(70); DireitaTras(70); }
+void AndaTras(){ EsquerdaTras(100); DireitaTras(100); }
 
 void GiraHorario(){ EsquerdaFrente(230); DireitaTras(70); }
 
