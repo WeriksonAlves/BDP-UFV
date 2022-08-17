@@ -35,7 +35,6 @@ struct Package { int id; int speed[2]; }; //Define a estrutura do pacote recebid
 Package packet;
 int8_t id_robot;
 unsigned long turnoffMotorTime = 0;
-byte address[][8] = {"BDPt","CAR3"};
 
 ////////////////////////////////////////////////////////////////////////////
 // Protótipo das funções:
@@ -54,6 +53,15 @@ void GiraAntiHorario();
 ////////////////////////////////////////////////////////////////////////////
 //Função setup
 void setup() {
+  //Indentificação do robô:
+  /* pinMode(BIT1, INPUT);
+  pinMode(BIT2, INPUT);
+  
+  if(!digitalRead(BIT1) && digitalRead(BIT2)) {id_robot = 1; address[][8] = {"BDPt","CAR1"};}
+  else if(digitalRead(BIT1) && !digitalRead(BIT2)) {id_robot = 2; address[][8] = {"BDPt","CAR2"};}
+  else if(digitalRead(BIT1) && digitalRead(BIT2)) {id_robot = 3; address[][8] = {"BDPt","CAR3"};}
+ */
+  
   // Setup das portas da Ponte H:
   pinMode(MTEF, OUTPUT); //Define o pino do motor esquerdo frente como saída
   pinMode(MTET, OUTPUT); //Define o pino do motor esquerdo trás como saída
@@ -71,21 +79,21 @@ void setup() {
   receptor.setChannel(83);                   //Define o canal do rádio
   receptor.setPALevel(RF24_PA_MIN);          //Define o nível de potência do rádio
   receptor.setDataRate( RF24_250KBPS );      //Define a taxa de transmissão do rádio
-  receptor.openReadingPipe(1, address[1]); //Define o endereço de recepção
+  if(ROBOID == 1) { 
+    id_robot = 1;
+    byte address[][8] = {"BDPt", "CAR1"};
+    receptor.openReadingPipe(1, address[1]); }
+  else if(ROBOID == 2) {
+    id_robot = 2;
+    byte address[][8] = {"BDPt", "CAR2"};
+    receptor.openReadingPipe(1, address[1]); }
+  else if(ROBOID == 3) {
+    id_robot = 3;
+    byte address[][8] = {"BDPt", "CAR3"};
+    receptor.openReadingPipe(1, address[1]); }
+  //receptor.openReadingPipe(1, address[1]); //Define o endereço de recepção
   receptor.startListening();                 //Inicia a recepção de pacotes
   receptor.printDetails();                   //Imprime os detalhes do rádio
-
-  //Indentificação do robô:
-  /* pinMode(BIT1, INPUT);
-  pinMode(BIT2, INPUT);
-  
-  if(!digitalRead(BIT1) && digitalRead(BIT2)) {id_robot = 1; address[][8] = {"BDPt","CAR1"};}
-  else if(digitalRead(BIT1) && !digitalRead(BIT2)) {id_robot = 2; address[][8] = {"BDPt","CAR2"};}
-  else if(digitalRead(BIT1) && digitalRead(BIT2)) {id_robot = 3; address[][8] = {"BDPt","CAR3"};}
- */
-  if(ROBOID == 1) {id_robot = 1; address[1][8] = '1'; }//{"BDPt","CAR1"};}
-  else if(ROBOID == 2) {id_robot = 2; address[1][8]  = '2'; }// {"BDPt","CAR2"};}
-  else if(ROBOID == 3) {id_robot = 3; address[1][8]  = '3'; }// {"BDPt","CAR3"};}
 }
 
 ////////////////////////////////////////////////////////////////////////////

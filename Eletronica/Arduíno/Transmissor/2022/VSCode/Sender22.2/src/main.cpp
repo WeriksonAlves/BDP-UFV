@@ -53,7 +53,7 @@ void setup() {
 
   // Configurações do rádio:
   transmissor.begin();                        //Inicia o rádio
-  transmissor.setChannel(82);                 //Define o canal do rádio
+  transmissor.setChannel(83);                 //Define o canal do rádio
   transmissor.setPALevel(RF24_PA_MIN);        //Define o nível de potência  
   transmissor.setDataRate( RF24_250KBPS );    //Define a taxa de dados
 
