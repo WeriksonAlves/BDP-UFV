@@ -16,15 +16,15 @@
 // Definições básicas:
 
 #define PWMA 5    //Pino PWMA => motor direito
-#define MTDF 1    //Pino AIN2 => direito frente
-#define MTDT 0    //Pino AIN1 => direito trás
-#define MTET 8    //Pino BIN1 => esquerdo trás
-#define MTEF 7    //Pino BIN2 => esquerdo frente
+#define MTDF 0    //Pino AIN2 => direito frente
+#define MTDT 1    //Pino AIN1 => direito trás
+#define MTET 7    //Pino BIN1 => esquerdo trás
+#define MTEF 8    //Pino BIN2 => esquerdo frente
 #define PWMB 6    //Pino PWMB => motor esquerdo
 #define BIT1 A1      //Dip Switch de escolha do robô
 #define BIT2 A2      //Dip Switch de escolha do robô
 #define LED 4        //Pino do LED para teste
-#define ROBOID 1     //Identificação do Robô
+#define ROBOID 2     //Identificação do Robô
 #define TIME_MECHANICAL 2000   //Tempo de espera para o robô parar
 #define TIME_TURN_OFF 150 // Tempo de espera para o robô parar
 RF24 receptor(9, 10); //Define os pinos de comunicação com o rádio
