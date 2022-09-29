@@ -83,7 +83,7 @@ void loop(){
   // Caso exista algum dado a ser enviado para o rádio
   if(Serial.available() > 0){
     data = Serial.readStringUntil('\n');
-    if(data.length() > 0){
+    if(data.length() == BUFFER_SIZE - 1){
       // Desliga o rádio de recebimento
       transmissor.stopListening();
 

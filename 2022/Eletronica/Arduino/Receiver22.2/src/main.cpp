@@ -24,9 +24,9 @@
 #define BIT1 A1      //Dip Switch de escolha do robô
 #define BIT2 A2      //Dip Switch de escolha do robô
 #define LED 4        //Pino do LED para teste
-#define ROBOID 2     //Identificação do Robô
+//#define ROBOID 2     //Identificação do Robô
 #define TIME_MECHANICAL 2000   //Tempo de espera para o robô parar
-#define TIME_TURN_OFF 150 // Tempo de espera para o robô parar
+#define TIME_TURN_OFF 300 // Tempo de espera para o robô parar
 RF24 receptor(9, 10); //Define os pinos de comunicação com o rádio
 
 struct Package { int id; int speed[2]; }; //Define a estrutura do pacote recebido
@@ -35,6 +35,7 @@ struct Package { int id; int speed[2]; }; //Define a estrutura do pacote recebid
 Package packet;
 int8_t id_robot;
 unsigned long turnoffMotorTime = 0;
+int ROBOID;
 
 ////////////////////////////////////////////////////////////////////////////
 // Protótipo das funções:
@@ -48,19 +49,21 @@ void AndaFrente();
 void AndaTras();
 void GiraHorario();
 void GiraAntiHorario();
+void ConfirmaRobo(int ROBOID);
 
 
 ////////////////////////////////////////////////////////////////////////////
 //Função setup
 void setup() {
   //Indentificação do robô:
-  /* pinMode(BIT1, INPUT);
+  pinMode(BIT1, INPUT);
   pinMode(BIT2, INPUT);
-  
-  if(!digitalRead(BIT1) && digitalRead(BIT2)) {id_robot = 1; address[][8] = {"BDPt","CAR1"};}
-  else if(digitalRead(BIT1) && !digitalRead(BIT2)) {id_robot = 2; address[][8] = {"BDPt","CAR2"};}
-  else if(digitalRead(BIT1) && digitalRead(BIT2)) {id_robot = 3; address[][8] = {"BDPt","CAR3"};}
- */
+  pinMode(LED,OUTPUT);
+
+  if(!digitalRead(BIT1) && !digitalRead(BIT2)) {ROBOID = 1; ConfirmaRobo(ROBOID);}
+  else if(!digitalRead(BIT1) && digitalRead(BIT2)) {ROBOID = 2; ConfirmaRobo(ROBOID);}
+  else if(digitalRead(BIT1) && !digitalRead(BIT2)) {ROBOID = 3; ConfirmaRobo(ROBOID);}
+  else if(digitalRead(BIT1) && digitalRead(BIT2)) {ROBOID = 4; ConfirmaRobo(ROBOID);}
   
   // Setup das portas da Ponte H:
   pinMode(MTEF, OUTPUT); //Define o pino do motor esquerdo frente como saída
@@ -128,8 +131,17 @@ void loop() {
 }
 ////////////////////////////////////////////////////////////////////////////
 // Implementação das funções
+void ConfirmaRobo(int ROBOID){
+  int Temp = 500;
+  delay(Temp);
+  if (ROBOID == 1){ digitalWrite(LED,HIGH); delay(Temp); digitalWrite(LED,LOW);}
+  if (ROBOID == 2){ digitalWrite(LED,HIGH); delay(Temp); digitalWrite(LED,LOW); delay(Temp); digitalWrite(LED,HIGH); delay(Temp); digitalWrite(LED,LOW);}
+  if (ROBOID == 3){ digitalWrite(LED,HIGH); delay(Temp); digitalWrite(LED,LOW); delay(Temp); digitalWrite(LED,HIGH); delay(Temp); digitalWrite(LED,LOW); delay(Temp); digitalWrite(LED,HIGH); delay(Temp); digitalWrite(LED,LOW);}
+  if (ROBOID == 4){ digitalWrite(LED,HIGH); delay(Temp); digitalWrite(LED,LOW); delay(Temp); digitalWrite(LED,HIGH); delay(Temp); digitalWrite(LED,LOW); delay(Temp); digitalWrite(LED,HIGH); delay(Temp); digitalWrite(LED,LOW); delay(Temp); digitalWrite(LED,HIGH); delay(Temp); digitalWrite(LED,LOW);}
+}
+
 void IntialMecanicRotine(int TEMPO){
-  delay(3000);
+  delay(1000);
   AndaFrente();
   delay(TEMPO);
   DesligaMotores();
@@ -166,10 +178,10 @@ void DireitaTras(int speed){
 
 void DesligaMotores(){ analogWrite(PWMA, 0); analogWrite(PWMB, 0); digitalWrite(MTEF, LOW); digitalWrite(MTET, LOW); digitalWrite(MTDF, LOW); digitalWrite(MTDT, LOW); }
 
-void AndaFrente(){ DireitaFrente(200); EsquerdaFrente(200); }
+void AndaFrente(){ DireitaFrente(250); EsquerdaFrente(250); }
 
-void AndaTras(){ EsquerdaTras(100); DireitaTras(100); }
+void AndaTras(){ EsquerdaTras(50); DireitaTras(50); }
 
-void GiraHorario(){ EsquerdaFrente(230); DireitaTras(70); }
+void GiraHorario(){ EsquerdaFrente(250); DireitaTras(50); }
 
-void GiraAntiHorario(){ EsquerdaTras(70); DireitaFrente(230); }
+void GiraAntiHorario(){ EsquerdaTras(50); DireitaFrente(250); }
