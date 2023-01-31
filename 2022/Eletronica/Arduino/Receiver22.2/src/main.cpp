@@ -3,7 +3,7 @@
 /*Autor: Wérikson Alves
   Código de recepção do pacote de dados por rádio para BDP - UFV
   Data de início: 28/04/2022
-  Data de finalização: ??/??/2022
+  Data de finalização: 07/10/2022
   Versão: 22.1
   Descrição da alteração: Foi preenchido os comentarios e ajustado o código
 */
