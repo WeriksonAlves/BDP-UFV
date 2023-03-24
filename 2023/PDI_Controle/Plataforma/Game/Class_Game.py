@@ -303,13 +303,27 @@ class GameWindow(object):
             self.Color_Opp = self.Var_Opp_Color_BGR
             self.Color_Ball = (0,165,255)
 
-            if(len(self.Posture_P1) != 0): self.Var_Game_Parameters[0, 0:] = np.array(self.Posture_P1).T
-            if(len(self.Posture_P2) != 0): self.Var_Game_Parameters[1, 0:] = np.array(self.Posture_P2).T
-            if(len(self.Posture_P3) != 0): self.Var_Game_Parameters[2, 0:] = np.array(self.Posture_P3).T
-            if(len(self.Position_Oponent_1) != 0): self.Var_Game_Parameters[3, 0:2] = np.array(self.Position_Oponent_1).T
-            if(len(self.Position_Oponent_2) != 0): self.Var_Game_Parameters[4, 0:2] = np.array(self.Position_Oponent_2).T
-            if(len(self.Position_Oponent_3) != 0): self.Var_Game_Parameters[5, 0:2] = np.array(self.Position_Oponent_3).T
-            if(len(self.Position_Ball) != 0): self.Var_Game_Parameters[6, 0:2] = self.Position_Ball.T
+            if(len(self.Posture_P1) != 0):
+                self.Var_Game_Parameters[0, 0:] = np.array(self.Posture_P1).T
+                self.Var_Game_Parameters[0, 0] = self.Var_Game_Parameters[0, 0]*-1
+            if(len(self.Posture_P2) != 0): 
+                self.Var_Game_Parameters[1, 0:] = np.array(self.Posture_P2).T
+                self.Var_Game_Parameters[1, 0] = self.Var_Game_Parameters[1, 0]*-1
+            if(len(self.Posture_P3) != 0):
+                self.Var_Game_Parameters[2, 0:] = np.array(self.Posture_P3).T
+                self.Var_Game_Parameters[2, 0] = self.Var_Game_Parameters[2, 0]*-1
+            if(len(self.Position_Oponent_1) != 0):
+                self.Var_Game_Parameters[3, 0:2] = np.array(self.Position_Oponent_1).T
+                self.Var_Game_Parameters[3, 0] = self.Var_Game_Parameters[3, 0]*-1
+            if(len(self.Position_Oponent_2) != 0):
+                self.Var_Game_Parameters[4, 0:2] = np.array(self.Position_Oponent_2).T
+                self.Var_Game_Parameters[4, 0] = self.Var_Game_Parameters[4, 0]*-1
+            if(len(self.Position_Oponent_3) != 0): 
+                self.Var_Game_Parameters[5, 0:2] = np.array(self.Position_Oponent_3).T
+                self.Var_Game_Parameters[5, 0] = self.Var_Game_Parameters[5, 0]*-1
+            if(len(self.Position_Ball) != 0): 
+                self.Var_Game_Parameters[6, 0:2] = self.Position_Ball.T
+                self.Var_Game_Parameters[6, 0] = self.Var_Game_Parameters[6, 0]*-1
             
             self.Game_Action()
 
@@ -581,10 +595,13 @@ class GameWindow(object):
         P1.baixonivel()
 
         P2.rBDP_pPos_X[0:, 0] = self.Var_Game_Parameters[1, 0:]
+       
         P2.rBDP_pPos_Xd[0:, 0] = self.Var_Game_Parameters[6, 0:]
+     
         P2.xtil()
         P2.autonivel()
         P2.baixonivel()
+        print(P2.rBDP_pSC_PWM)
 
         P3.rBDP_pPos_X[0:, 0] = self.Var_Game_Parameters[2, 0:]
         P3.rBDP_pPos_Xd[0:, 0] = self.Var_Game_Parameters[6, 0:]

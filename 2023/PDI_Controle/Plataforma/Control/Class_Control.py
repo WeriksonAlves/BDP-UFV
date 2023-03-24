@@ -87,8 +87,8 @@ class MY_TEAM(object):
     def autonivel(self):
         gl = 1
         ga = 1
-        k1 = 0.98
-        k2 = 2
+        k1 = 2
+        k2 = 1
         
         norma = np.linalg.norm(self.rBDP_pPos_Xtil[0:2,0:])
         
@@ -111,8 +111,8 @@ class MY_TEAM(object):
         Wmax = 2
 
         # Limites para envia PWM
-        limPWMp = np.array([150, 250])  # Velocidade positiva
-        limPWMn = np.array([150, 50]) # Velocidade negativa
+        limPWMp = np.array([20, 90])  # Velocidade positiva
+        limPWMn = np.array([-20, -90]) # Velocidade negativa
 
         K2 = np.array([[1/2, 1/2], [1/self.rBDP_pSC_d, -1/self.rBDP_pSC_d]])
 
@@ -126,9 +126,9 @@ class MY_TEAM(object):
                 self.rBDP_pSC_W[ii][0] = np.sign(self.rBDP_pSC_W[ii][0])*Wmax
 
             if self.rBDP_pSC_W[ii][0] > 0:
-                self.rBDP_pSC_PWM[ii][0] =  ((limPWMp[1]-limPWMp[0])/Wmax)*self.rBDP_pSC_W[ii] + limPWMp[0]
+                self.rBDP_pSC_PWM[ii][0] =  ((limPWMp[1]-limPWMp[0])/Wmax)*self.rBDP_pSC_W[ii] + limPWMp[0] + 150
             else:
-                self.rBDP_pSC_PWM[ii][0] = -((limPWMn[1]-limPWMn[0])/Wmax)*self.rBDP_pSC_W[ii] + limPWMn[0]
+                self.rBDP_pSC_PWM[ii][0] = -((limPWMn[1]-limPWMn[0])/Wmax)*self.rBDP_pSC_W[ii] + limPWMn[0] + 150
 
 class OPPONENT:
 
