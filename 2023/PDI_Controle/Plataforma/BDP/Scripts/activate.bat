@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=C:\Users\55329\Documents\GitHub\BDP_PDI\Plataforma\BDP
+set VIRTUAL_ENV=C:\Users\robot\OneDrive\Área de Trabalho\APP BDP 2023\BDP
 
 if not defined PROMPT set PROMPT=$P$G
 
