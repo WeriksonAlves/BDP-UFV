@@ -248,13 +248,18 @@ class GameWindow(object):
     def Command_StartComunication(self):
         start = time.time()
         try:
-            self.porta = serial.Serial('COM1', 115200, timeout=2)
+            self.pArduino = serial.Serial('COM7', 115200, timeout=2)
+            self.pEsp = serial.Serial('COM9', 115200, timeout=2)
             if self.Var_Comunication == False:
-                self.porta.close()
-                self.porta.open()
+                self.pArduino.close()
+                self.pEsp.close()
+
+                self.pArduino.open()
+                self.pEsp.open()
                 #1,2,3 subtitui B,D,P
                 while True:
-                    self.porta.write([1, 2, 200, 100, 200, 100, 200, 100, 3, 10])
+                    self.pArduino.write([1, 2, 200, 100, 200, 100, 200, 100, 3, 10])
+                    self.pEsp.write([1, 2, 200, 100, 200, 100, 200, 100, 3, 10])
                     if time.time() - start > 1:
                         break
                 self.Var_Comunication = True
@@ -262,7 +267,9 @@ class GameWindow(object):
                 self.Set_StatusBar("Comunição Iniciada")
         except:
             try:
-                self.porta.close()
+                self.pArduino.close()
+                self.pEsp.close()
+
                 self.Var_Comunication = False
                 self.Clear_StatusBar()
                 self.Set_StatusBar("Comunição Encerrada")
@@ -321,28 +328,26 @@ class GameWindow(object):
             self.Color_Ball = (0,165,255)
 
             if(len(self.Posture_P1) != 0):
-                self.Var_Game_Parameters[0, 0:] = np.array(self.Posture_P1).T#/1000
+                self.Var_Game_Parameters[0, 0:] = np.array(self.Posture_P1).T
                 self.Var_Game_Parameters[0, 0] = self.Var_Game_Parameters[0, 0]*-1
             if(len(self.Posture_P2) != 0): 
-                self.Var_Game_Parameters[1, 0:] = np.array(self.Posture_P2).T#/1000
+                self.Var_Game_Parameters[1, 0:] = np.array(self.Posture_P2).T
                 self.Var_Game_Parameters[1, 0] = self.Var_Game_Parameters[1, 0]*-1
             if(len(self.Posture_P3) != 0):
-                self.Var_Game_Parameters[2, 0:] = np.array(self.Posture_P3).T#/1000
+                self.Var_Game_Parameters[2, 0:] = np.array(self.Posture_P3).T
                 self.Var_Game_Parameters[2, 0] = self.Var_Game_Parameters[2, 0]*-1
             if(len(self.Position_Oponent_1) != 0):
-                self.Var_Game_Parameters[3, 0:2] = np.array(self.Position_Oponent_1).T#/1000
+                self.Var_Game_Parameters[3, 0:2] = np.array(self.Position_Oponent_1).T
                 self.Var_Game_Parameters[3, 0] = self.Var_Game_Parameters[3, 0]*-1
             if(len(self.Position_Oponent_2) != 0):
-                self.Var_Game_Parameters[4, 0:2] = np.array(self.Position_Oponent_2).T#/1000
+                self.Var_Game_Parameters[4, 0:2] = np.array(self.Position_Oponent_2).T
                 self.Var_Game_Parameters[4, 0] = self.Var_Game_Parameters[4, 0]*-1
             if(len(self.Position_Oponent_3) != 0): 
-                self.Var_Game_Parameters[5, 0:2] = np.array(self.Position_Oponent_3).T#/1000
+                self.Var_Game_Parameters[5, 0:2] = np.array(self.Position_Oponent_3).T
                 self.Var_Game_Parameters[5, 0] = self.Var_Game_Parameters[5, 0]*-1
             if(len(self.Position_Ball) != 0): 
-                self.Var_Game_Parameters[6, 0:2] = self.Position_Ball.T#/1000
+                self.Var_Game_Parameters[6, 0:2] = self.Position_Ball.T
                 self.Var_Game_Parameters[6, 0] = self.Var_Game_Parameters[6, 0]*-1
-
-            print(self.Var_Game_Parameters)
             
             self.Game_Action()
 
@@ -640,7 +645,8 @@ class GameWindow(object):
         # print()
         
         try:
-            self.porta.write([1, 2, int(P1.rBDP_pSC_PWM[0,0]), int(P1.rBDP_pSC_PWM[1,0]), int(P2.rBDP_pSC_PWM[0,0]), int(P2.rBDP_pSC_PWM[1,0]), int(P3.rBDP_pSC_PWM[0,0]), int(P3.rBDP_pSC_PWM[1,0]), 3, 10])
+            self.pArduino.write([1, 2, int(P1.rBDP_pSC_PWM[0,0]), int(P1.rBDP_pSC_PWM[1,0]), int(P2.rBDP_pSC_PWM[0,0]), int(P2.rBDP_pSC_PWM[1,0]), int(P3.rBDP_pSC_PWM[0,0]), int(P3.rBDP_pSC_PWM[1,0]), 3, 10])
+            self.pEsp.write([1, 2, int(P1.rBDP_pSC_PWM[0,0]), int(P1.rBDP_pSC_PWM[1,0]), int(P2.rBDP_pSC_PWM[0,0]), int(P2.rBDP_pSC_PWM[1,0]), int(P3.rBDP_pSC_PWM[0,0]), int(P3.rBDP_pSC_PWM[1,0]), 3, 10])
             EndCycle = time.time()
             CheckTime =  EndCycle - self.StartCycle
             self.Clear_StatusBar()

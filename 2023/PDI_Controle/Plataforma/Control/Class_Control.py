@@ -43,13 +43,13 @@ class MY_TEAM(object):
         # g: Green
         # b: Blue
         # m: Magenta
-        if ((j == (0,0,255)).all()):
+        if (j == np.array([0,0,255])).all():
             self.rBDP_pCor   = 'r'
-        elif ((j == (0,255,0)).all()):
+        elif (j == np.array([0,255,0])).all():
             self.rBDP_pCor   = 'g'
-        elif ((j == (255,0,0)).all()):
+        elif (j == np.array([255,0,0])).all():
             self.rBDP_pCor   = 'b'
-        elif ((j == (238,130,238)).all()):
+        elif (j == np.array([238,130,238])).all():
             self.rBDP_pCor   = 'm'
         else:
             print('Erro na cor do jogador')
