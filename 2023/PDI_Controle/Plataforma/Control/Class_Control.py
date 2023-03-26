@@ -28,9 +28,9 @@ class MY_TEAM(object):
 
         
         # c: Cyan ou y: Yellow
-        if (t == (255,255,0)):
+        if (t == np.array([255,255,0])).all():
             self.rBDP_pTime   = 'c'
-        elif (t == (0,255,255)):
+        elif (t == np.array([0,255,255])).all():
             self.rBDP_pTime   = 'y'
         else:
             print('Erro na cor do time')
@@ -129,6 +129,11 @@ class MY_TEAM(object):
                 self.rBDP_pSC_PWM[ii][0] =  ((limPWMp[1]-limPWMp[0])/Wmax)*self.rBDP_pSC_W[ii] + limPWMp[0] + 150
             else:
                 self.rBDP_pSC_PWM[ii][0] = -((limPWMn[1]-limPWMn[0])/Wmax)*self.rBDP_pSC_W[ii] + limPWMn[0] + 150
+
+    # Seta os maximos do sinal
+    def set_speed(self,left ,right):
+        self.left_speed = max(min(left,100),-100)
+        self.right_speed = max(min(right,100),-100)
 
 class OPPONENT:
 

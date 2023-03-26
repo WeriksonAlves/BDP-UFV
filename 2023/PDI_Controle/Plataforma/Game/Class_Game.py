@@ -174,29 +174,32 @@ class GameWindow(object):
     #;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     # Cria os botões na janela
     def Create_Button(self):
-        But_SaveCalibration = Button(self.Window, text="Salvar\nConfiguração", command=self.Command_SaveSettings)
+        But_SaveCalibration = Button(self.Window, text="Salvar\nConfiguração", command = self.Command_SaveSettings)
         But_SaveCalibration.place(height=50, width=200, x=50, y=10)
 
-        But_SaveCalibration = Button(self.Window, text="Carregar\nConfiguração", command=self.Command_LoadSettings, state='disabled')
+        But_SaveCalibration = Button(self.Window, text="Carregar\nConfiguração", command = self.Command_LoadSettings, state='disabled')
         But_SaveCalibration.place(height=50, width=200, x=50, y=70)
 
-        But_StartComunication = Button(self.Window, text="Abrir/Fechar \nComunicação", command=self.Command_StartComunication)
+        But_StartComunication = Button(self.Window, text="Abrir/Fechar \nComunicação", command = self.Command_StartComunication)
         But_StartComunication.place(height=50, width=200, x=50, y=130)
 
+        But_MechanicalTest = Button(self.Window, text="Teste Mecânico", command = lambda: threading.Thread(target=self.Command_MechanicalTest).start())
+        But_MechanicalTest.place(height=50, width=200, x=50, y=190)
+
         But_StartGame = Button(self.Window, text="Iniciar Partida", command = lambda: threading.Thread(target=self.Command_StartGame).start())
-        But_StartGame.place(height=50, width=200, x=50, y=190)
+        But_StartGame.place(height=50, width=200, x=50, y=250)
 
         But_StopGame = Button(self.Window, text="Parar Partida", command=self.Command_StopGame)
-        But_StopGame.place(height=50, width=200, x=50, y=250)
+        But_StopGame.place(height=50, width=200, x=50, y=310)
 
         But_ViewCamera = Button(self.Window, text="Ver Câmera", command = lambda: threading.Thread(target=self.Command_ViewCamera).start())
-        But_ViewCamera.place(height=50, width=200, x=50, y=310)
+        But_ViewCamera.place(height=50, width=200, x=50, y=370)
 
         But_ViewSegmentation = Button(self.Window, text="Ver Segmentação", command = lambda: threading.Thread(target=self.Command_ViewSegmentation).start(), state='disabled')
-        But_ViewSegmentation.place(height=50, width=200, x=50, y=370)
+        But_ViewSegmentation.place(height=50, width=200, x=50, y=430)
 
         But_ViewAssociation = Button(self.Window, text="Ver Associação", command = lambda: threading.Thread(target=self.Command_ViewAssociation).start())
-        But_ViewAssociation.place(height=50, width=200, x=50, y=430)
+        But_ViewAssociation.place(height=50, width=200, x=50, y=490)
     #;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     def Command_SaveSettings(self): # Voltar aqui depois
         Game_Settings = np.array([[self.Var_Cyan_Team.get(),self.Var_Yellow_Team.get()],
@@ -245,7 +248,7 @@ class GameWindow(object):
     def Command_StartComunication(self):
         start = time.time()
         try:
-            self.porta = serial.Serial('COM7', 115200, timeout=2)
+            self.porta = serial.Serial('COM1', 115200, timeout=2)
             if self.Var_Comunication == False:
                 self.porta.close()
                 self.porta.open()
@@ -266,6 +269,20 @@ class GameWindow(object):
             except:
                 self.Clear_StatusBar()
                 self.Set_StatusBar("Conecte o transmissor")
+    #;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    def Command_MechanicalTest(self,Rx=1.5,Ry=2.5,w=2*np.pi/60):
+        Dif_0 = [100, 100, 100]
+        Temp1 = time.perf_counter()
+
+        while (sum(Dif_0) > 15):
+            t = Temp1 - time.perf_counter()
+            if t > 1:
+                # Chegar na posição desejada
+                Xd = [Rx*np.cos(w*t), Ry*np.sin(w*t)]
+                dXd = [-Rx*w*np.sin(w*t), Ry*w*np.cos(w*t)]
+            break
+
+        # Executa o circulo
     #;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     def Command_StartGame(self):
         self.Var_Play = True
@@ -304,26 +321,28 @@ class GameWindow(object):
             self.Color_Ball = (0,165,255)
 
             if(len(self.Posture_P1) != 0):
-                self.Var_Game_Parameters[0, 0:] = np.array(self.Posture_P1).T
+                self.Var_Game_Parameters[0, 0:] = np.array(self.Posture_P1).T#/1000
                 self.Var_Game_Parameters[0, 0] = self.Var_Game_Parameters[0, 0]*-1
             if(len(self.Posture_P2) != 0): 
-                self.Var_Game_Parameters[1, 0:] = np.array(self.Posture_P2).T
+                self.Var_Game_Parameters[1, 0:] = np.array(self.Posture_P2).T#/1000
                 self.Var_Game_Parameters[1, 0] = self.Var_Game_Parameters[1, 0]*-1
             if(len(self.Posture_P3) != 0):
-                self.Var_Game_Parameters[2, 0:] = np.array(self.Posture_P3).T
+                self.Var_Game_Parameters[2, 0:] = np.array(self.Posture_P3).T#/1000
                 self.Var_Game_Parameters[2, 0] = self.Var_Game_Parameters[2, 0]*-1
             if(len(self.Position_Oponent_1) != 0):
-                self.Var_Game_Parameters[3, 0:2] = np.array(self.Position_Oponent_1).T
+                self.Var_Game_Parameters[3, 0:2] = np.array(self.Position_Oponent_1).T#/1000
                 self.Var_Game_Parameters[3, 0] = self.Var_Game_Parameters[3, 0]*-1
             if(len(self.Position_Oponent_2) != 0):
-                self.Var_Game_Parameters[4, 0:2] = np.array(self.Position_Oponent_2).T
+                self.Var_Game_Parameters[4, 0:2] = np.array(self.Position_Oponent_2).T#/1000
                 self.Var_Game_Parameters[4, 0] = self.Var_Game_Parameters[4, 0]*-1
             if(len(self.Position_Oponent_3) != 0): 
-                self.Var_Game_Parameters[5, 0:2] = np.array(self.Position_Oponent_3).T
+                self.Var_Game_Parameters[5, 0:2] = np.array(self.Position_Oponent_3).T#/1000
                 self.Var_Game_Parameters[5, 0] = self.Var_Game_Parameters[5, 0]*-1
             if(len(self.Position_Ball) != 0): 
-                self.Var_Game_Parameters[6, 0:2] = self.Position_Ball.T
+                self.Var_Game_Parameters[6, 0:2] = self.Position_Ball.T#/1000
                 self.Var_Game_Parameters[6, 0] = self.Var_Game_Parameters[6, 0]*-1
+
+            print(self.Var_Game_Parameters)
             
             self.Game_Action()
 
@@ -595,13 +614,11 @@ class GameWindow(object):
         P1.baixonivel()
 
         P2.rBDP_pPos_X[0:, 0] = self.Var_Game_Parameters[1, 0:]
-       
         P2.rBDP_pPos_Xd[0:, 0] = self.Var_Game_Parameters[6, 0:]
-     
         P2.xtil()
         P2.autonivel()
         P2.baixonivel()
-        print(P2.rBDP_pSC_PWM)
+
 
         P3.rBDP_pPos_X[0:, 0] = self.Var_Game_Parameters[2, 0:]
         P3.rBDP_pPos_Xd[0:, 0] = self.Var_Game_Parameters[6, 0:]
@@ -609,6 +626,15 @@ class GameWindow(object):
         P3.autonivel()
         P3.baixonivel()
 
+        # P2.rBDP_pPos_X[0:, 0] = self.Var_Game_Parameters[1, 0:]
+        # P2.rBDP_pPos_Xd[0:, 0] = self.Var_Game_Parameters[6, 0:]
+        # P2.xtil()
+        # P2.autonivel()
+        # P2.baixonivel()
+        # print('1: ',P1.rBDP_pSC_PWM[0],P1.rBDP_pSC_PWM[1],'2: ',P2.rBDP_pSC_PWM[0],P2.rBDP_pSC_PWM[1],'3: ',P3.rBDP_pSC_PWM[0],P3.rBDP_pSC_PWM[1])
+
+        # print(P1.rBDP_pSC_PWM, P2.rBDP_pSC_PWM, P3.rBDP_pSC_PWM)
+        print('1: ',P1.rBDP_pSC_PWM[0],P1.rBDP_pSC_PWM[1],'2: ',P2.rBDP_pSC_PWM[0],P2.rBDP_pSC_PWM[1],'3: ',P3.rBDP_pSC_PWM[0],P3.rBDP_pSC_PWM[1])
         # print()
         # print(self.Var_Game_Parameters)
         # print()

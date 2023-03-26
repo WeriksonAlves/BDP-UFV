@@ -29,7 +29,7 @@ class App_BDP:
         self.Var_MedianBlur = 5
         self.Var_Kernel = np.ones((2,2),np.uint8)
         self.Var_CameraOn = False
-        self.Var_FPS = 60
+        self.Var_FPS = 25
         self.Var_PTM = np.ones((3,3))
         self.Current_Folder = os.path.dirname(__file__)
         self.Var_MatrixColor = np.array([[0, 255, 0, 255, 0, 255],
