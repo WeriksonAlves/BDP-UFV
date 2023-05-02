@@ -91,7 +91,7 @@ class MY_TEAM(object):
         k2 = 1
         
         norma = np.linalg.norm(self.rBDP_pPos_Xtil[0:2,0:])
-        
+        print(norma)
         F_sqrt = self.rBDP_pPos_dXd[0:2,0:] + (k1/np.sqrt(k2**2 + norma**2))*self.rBDP_pPos_Xtil[0:2,0:]
 
         G = np.array([[gl, 0],
@@ -108,11 +108,11 @@ class MY_TEAM(object):
 
 
     def baixonivel(self):
-        Wmax = 2
+        Wmax = 20
 
         # Limites para envia PWM
-        limPWMp = np.array([20, 90])  # Velocidade positiva
-        limPWMn = np.array([-20, -90]) # Velocidade negativa
+        limPWMp = np.array([20, 70])  # Velocidade positiva
+        limPWMn = np.array([-20, -70]) # Velocidade negativa
 
         K2 = np.array([[1/2, 1/2], [1/self.rBDP_pSC_d, -1/self.rBDP_pSC_d]])
 
