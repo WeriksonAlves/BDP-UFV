@@ -2,7 +2,7 @@
 :::::::::::::::::::::::::::::::::::::::::::::::::::
 :Programadores: Mateus Souza e Werikson Alves   :
 Versão Final: 20/01/2022
-:Data de início: 01/05/2022 - Data de término: ?? :
+:Data de início: 01/05/2022 - Data de término: 31/01/2023 :
 :::::::::::::::::::::::::::::::::::::::::::::::::::
 
 PLATAFORMA BDP 2023
@@ -18,7 +18,8 @@ from tkinter import*
 from Camera.Class_Camera import*
 from Colors.Class_Colors import*
 from Field.Class_Field import*
-from Game.Class_Game import*
+# from Game.Class_Game import*
+from Game.Test_Class_Game_27_04 import*
 
 import sys
 import os
@@ -26,10 +27,10 @@ import os
 class App_BDP:
     def __init__(self):
         # Variaveis principais:
-        self.Var_MedianBlur = 5
-        self.Var_Kernel = np.ones((2,2),np.uint8)
+        self.Var_MedianBlur = 3
+        self.Var_Kernel = np.ones((3,3),np.uint8)
         self.Var_CameraOn = False
-        self.Var_FPS = 25
+        self.Var_FPS = 15
         self.Var_PTM = np.ones((3,3))
         self.Current_Folder = os.path.dirname(__file__)
         self.Var_MatrixColor = np.array([[0, 255, 0, 255, 0, 255],
@@ -95,7 +96,7 @@ class App_BDP:
         # Abre a janela de calibração de campo
         OpenWindowField = Button(self.WindowMain, text= "Calibrar Campo", command = self.Command_OpenWindowField)
         OpenWindowField.place(height=50, width=200, x=50, y=250)       
-
+        
         #Encerra o software
         CloseAll = Button(self.WindowMain, text= "Encerrar o programa", bg='grey', activebackground='red', command=self.Command_Stop)
         CloseAll.place(height=50, width=200, x=50, y=310)

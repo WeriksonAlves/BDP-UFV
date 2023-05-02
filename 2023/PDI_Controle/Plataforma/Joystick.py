@@ -32,6 +32,7 @@ def check_analog(joysticks, robots):
                     
 def check_RT(joysticks, robots):
     for i,joystick in enumerate(joysticks):
+       
         robots[i].rBDP_pSC_PWM = np.array([[50,250]]).T
 def check_LT(joysticks, robots):
     for i,joystick in enumerate(joysticks):
@@ -44,15 +45,15 @@ def set_speed(left ,right):
     return left_speed,right_speed
 
 start = time.time()
-porta = serial.Serial('COM7', 115200, timeout=2)
+porta = serial.Serial('COM9', 115200, timeout=2)
 porta.close()
 porta.open()
 
 while True:
-    porta.write([1, 2, 150, 150, 200, 100, 150, 150, 3, 10])
-    if time.time() - start > 1:
-        break            
-
+    porta.write([1, 2, 50, 250, 200, 100, 50, 250, 3, 10])
+    # if time.time() - start > 1:
+    #     break            
+# 
 # Loop principal
 while True:
     # Captura eventos dos joysticks
