@@ -1,0 +1,108 @@
+% % Somar 100 para casos de valores negativos
+% if sqrt( (JogBDP(1).pPos.X(2,1) - Bola2.X(2))^2 + (JogBDP(1).pPos.X(1,1) - Bola2.X(1))^2 ) > 50
+%     ang  = atan2(Bola2.X(2)-JogBDP(1).pPos.X(2,1),(Bola2.X(1)-JogBDP(1).pPos.X(1,1)));
+% else
+%     ang  = atan2(Bola.X(2)-JogBDP(1).pPos.X(2,1),(Bola.X(1)-JogBDP(1).pPos.X(1,1)));
+% end
+%
+%
+% if abs(ang) > pi
+%     if ang > 0
+%         ang = ang - 2*pi;
+%     else
+%         ang = ang + 2*pi;
+%     end
+% end
+%
+% ang = rad2deg(ang);
+% ang_dif = ang - rad2deg(JogBDP(1).pPos.X(3,1));
+%
+%
+% if abs(ang_dif) > 180
+%     if ang_dif > 0
+%         ang_dif = ang_dif - 2*180;
+%     else
+%         ang_dif = ang_dif + 2*180;
+%     end
+% end
+%
+%
+%
+% % disp(['ang =' num2str(ang)]);
+% % COM.msg = ['B' 'D' 150 150 150 150 150 150 'P' 10];
+%
+% if ang_dif> 7
+%  COM.msg = ['B' 'D' 160 140 uint8(round(ang/2)+150) 150 150 150 'P' 10];
+%   disp(['COM.msg =' num2str(round(ang/2)),' 0']);
+%
+% elseif ang_dif < -7
+%  COM.msg = ['B' 'D' 140  160 150 uint8(abs(round(ang/2))+150) 150 150 'P' 10];
+%   disp(['COM.msg = 0 ', num2str(abs(round(ang/2))+150)]);
+%
+% else
+%         COM.msg = ['B' 'D' 115 125 150 150 150 150 'P' 10];
+%    JogBDP(1).pPar.avanca = 1;
+%    JogBDP(1).pPar.ctr_avanca = 1;
+% end
+%
+% if JogBDP(1).pPar.avanca == 1
+%          COM.msg = ['B' 'D' 115 125 150 150 150 150 'P' 10];
+%     JogBDP(1).pPar.ctr_avanca = JogBDP(1).pPar.ctr_avanca + 1;
+% end
+%
+% if JogBDP(1).pPar.ctr_avanca > 2
+%     JogBDP(1).pPar.avanca = 0;
+%     JogBDP(1).pPar.ctr_avanca = 0;
+% end
+%
+%
+%
+% % fprintf(COM.Porta,COM.msg);
+
+% Rotina para teste
+% Descrição da mensagem
+% Com.msg =
+% 1- caracter de cabeçalho = B
+% 2- caracter de cabeçalho = D
+% 3- caracter da roda Esquerda R1 (< 150 p/ trás)
+% 4- caracter da roda Direita R1 (< 150 p/ trás)
+
+% COM.msg = ['B' 'D' 100 150 150 150 150 150 'P' 10];
+
+Wmax = 2;
+
+% Atuar usando Joystick
+% if sum(button(joy))
+%     for ii = 1:3
+%         JogBDP(ii).pSC.U = [-axis(joy,2)*100; axis(joy,3)]*button(joy,ii);
+% 
+%         % Limites para envia PWM
+%         JogBDP(ii).pSC.rL = 10;
+%         JogBDP(ii).pSC.rR = 10;
+%         JogBDP(ii).pSC.W = [1/JogBDP(ii).pSC.rL -JogBDP(ii).pSC.d/(2*JogBDP(ii).pSC.rL); 1/JogBDP(ii).pSC.rR JogBDP(ii).pSC.d/(2*JogBDP(ii).pSC.rR)]*JogBDP(ii).pSC.U;
+%         % rBDP.pSC.W = [1/rBDP.pSC.r -rBDP.pSC.d/(2*rBDP.pSC.r); 1/rBDP.pSC.r rBDP.pSC.d/(2*rBDP.pSC.r)]*rBDP.pSC.U;
+% 
+%         for jj = 1:2
+%             if abs(JogBDP(ii).pSC.W(jj)) > Wmax
+%                 JogBDP(ii).pSC.W(jj) = sign(JogBDP(ii).pSC.W(jj))*Wmax;
+%             end
+%             JogBDP(ii).pSC.PWM(jj) = 50*JogBDP(ii).pSC.W(jj) + 150;
+% 
+%         end
+% 
+%     end
+% end
+
+% for ii = 1:3
+%     disp(JogBDP(ii).pSC.W)
+% end
+
+COM.msg = ['B' 'D' uint8(JogBDP(1).pSC.PWM(1)) uint8(JogBDP(1).pSC.PWM(2)) ...
+    uint8(JogBDP(2).pSC.PWM(1)) uint8(JogBDP(2).pSC.PWM(2)) ...
+    uint8(JogBDP(3).pSC.PWM(1)) uint8(JogBDP(3).pSC.PWM(2)) 'P' 10];
+
+
+% COM.msg = ['B' 'D' 160 140 160 140 160 140 'P' 10];
+
+fwrite(COM.Porta,COM.msg,'char');
+
