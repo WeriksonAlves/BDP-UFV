@@ -11,11 +11,14 @@ from tkinter import *
 from math import dist
 from tkinter import ttk
 
+from Controle.Class_Control import*
+
 import cv2
 import threading
 import numpy as np
 import os
-import serial
+# import serial
+import serial.tools.list_ports
 import time
 import math
 
@@ -24,12 +27,12 @@ class JanelaPDI(object):
     def __init__(self, MatrizCor, InformacoesCamera, FPS, Kernel, MedianBlur, MatrizTransfPerspectiva):
         """
         Classe responsável pela criação da janela de configurações e visualização.
-        :param MatrizCor: Matriz contendo informações sobre as cores a serem detectadas.
-        :param InformacoesCamera: Objeto responsável por capturar imagens da câmera.
-        :param FPS: Taxa de quadros por segundo para a visualização das imagens da câmera.
-        :param Kernel: Matriz de convolução utilizada em algumas operações de processamento de imagens.
-        :param MedianBlur: Parâmetro para aplicar um filtro de mediana nas imagens.
-        :param MatrizTransfPerspectiva: Matriz de transformação de perspectiva utilizada em algumas operações.
+        MatrizCor: Matriz contendo informações sobre as cores a serem detectadas.
+        InformacoesCamera: Objeto responsável por capturar imagens da câmera.
+        FPS: Taxa de quadros por segundo para a visualização das imagens da câmera.
+        Kernel: Matriz de convolução utilizada em algumas operações de processamento de imagens.
+        MedianBlur: Parâmetro para aplicar um filtro de mediana nas imagens.
+        MatrizTransfPerspectiva: Matriz de transformação de perspectiva utilizada em algumas operações.
         """
 
         self.Var_InformacoesCamera = InformacoesCamera
@@ -87,7 +90,7 @@ class JanelaPDI(object):
         Txt_ConfiguracoesJogo.place(height=30, width=130, x=300, y=0)
 
         Txt_InformacoesJogadores = Label(self.Janela, text="Informações dos Jogadores", bg='#229A00')
-        Txt_InformacoesJogadores.place(height=30, width=150, x=300, y=170)
+        Txt_InformacoesJogadores.place(height=30, width=150, x=300, y=200)
 
         Txt_Jogador1 = Label(self.Janela, text="Jogador 1", bg='#229A00')
         Txt_Jogador1.place(height=30, width=100, x=310, y=80)
@@ -183,27 +186,27 @@ class JanelaPDI(object):
         Cor_J3_2 = StringVar()
 
 
-        self.Var_P1_Funcao = ttk.Combobox(self.Janela, state= 'readonly', textvariable= Funcao_J1, values= Lista_Funcoes, justify= 'center')
-        self.Var_P1_Funcao.place(height= 20, width= 100, x= 310, y= 110)        
-        self.Var_P2_Funcao = ttk.Combobox(self.Janela, state= 'readonly', textvariable= Funcao_J2, values= Lista_Funcoes, justify= 'center')
-        self.Var_P2_Funcao.place(height= 20, width= 100, x= 430, y= 110)        
-        self.Var_P3_Funcao = ttk.Combobox(self.Janela, state= 'readonly', textvariable= Funcao_J3, values= Lista_Funcoes, justify= 'center')
-        self.Var_P3_Funcao.place(height= 20, width= 100, x= 550, y= 110)
+        self.Var_J1_Funcao = ttk.Combobox(self.Janela, state= 'readonly', textvariable= Funcao_J1, values= Lista_Funcoes, justify= 'center')
+        self.Var_J1_Funcao.place(height= 20, width= 100, x= 310, y= 110)        
+        self.Var_J2_Funcao = ttk.Combobox(self.Janela, state= 'readonly', textvariable= Funcao_J2, values= Lista_Funcoes, justify= 'center')
+        self.Var_J2_Funcao.place(height= 20, width= 100, x= 430, y= 110)        
+        self.Var_J3_Funcao = ttk.Combobox(self.Janela, state= 'readonly', textvariable= Funcao_J3, values= Lista_Funcoes, justify= 'center')
+        self.Var_J3_Funcao.place(height= 20, width= 100, x= 550, y= 110)
 
         
-        self.Var_P1_Cor_1 = ttk.Combobox(self.Janela, state= 'readonly', textvariable= Cor_J1_1, values= Lista_Camisas, justify= 'center')
-        self.Var_P1_Cor_1.place(height= 20, width= 100, x= 310, y= 140)
-        self.Var_P2_Cor_1 = ttk.Combobox(self.Janela, state= 'readonly', textvariable= Cor_J2_1, values= Lista_Camisas, justify= 'center')
-        self.Var_P2_Cor_1.place(height= 20, width= 100, x= 430, y= 140)
-        self.Var_P3_Cor_1 = ttk.Combobox(self.Janela, state= 'readonly', textvariable= Cor_J3_1, values= Lista_Camisas, justify= 'center')
-        self.Var_P3_Cor_1.place(height= 20, width= 100, x= 550, y= 140)
+        self.Var_J1_Cor_1 = ttk.Combobox(self.Janela, state= 'readonly', textvariable= Cor_J1_1, values= Lista_Camisas, justify= 'center')
+        self.Var_J1_Cor_1.place(height= 20, width= 100, x= 310, y= 140)
+        self.Var_J2_Cor_1 = ttk.Combobox(self.Janela, state= 'readonly', textvariable= Cor_J2_1, values= Lista_Camisas, justify= 'center')
+        self.Var_J2_Cor_1.place(height= 20, width= 100, x= 430, y= 140)
+        self.Var_J3_Cor_1 = ttk.Combobox(self.Janela, state= 'readonly', textvariable= Cor_J3_1, values= Lista_Camisas, justify= 'center')
+        self.Var_J3_Cor_1.place(height= 20, width= 100, x= 550, y= 140)
 
-        self.Var_P1_Cor_2 = ttk.Combobox(self.Janela, state= 'readonly', textvariable= Cor_J1_2, values= Lista_Camisas, justify= 'center')
-        self.Var_P1_Cor_2.place(height= 20, width= 100, x= 310, y =170)
-        self.Var_P2_Cor_2 = ttk.Combobox(self.Janela, state= 'readonly', textvariable= Cor_J2_2, values= Lista_Camisas, justify= 'center')
-        self.Var_P2_Cor_2.place(height= 20, width= 100, x= 430, y= 170)
-        self.Var_P3_Cor_2 = ttk.Combobox(self.Janela, state= 'readonly', textvariable= Cor_J3_2, values= Lista_Camisas, justify= 'center')
-        self.Var_P3_Cor_2.place(height= 20, width= 100, x= 550, y= 170)
+        self.Var_J1_Cor_2 = ttk.Combobox(self.Janela, state= 'readonly', textvariable= Cor_J1_2, values= Lista_Camisas, justify= 'center')
+        self.Var_J1_Cor_2.place(height= 20, width= 100, x= 310, y =170)
+        self.Var_J2_Cor_2 = ttk.Combobox(self.Janela, state= 'readonly', textvariable= Cor_J2_2, values= Lista_Camisas, justify= 'center')
+        self.Var_J2_Cor_2.place(height= 20, width= 100, x= 430, y= 170)
+        self.Var_J3_Cor_2 = ttk.Combobox(self.Janela, state= 'readonly', textvariable= Cor_J3_2, values= Lista_Camisas, justify= 'center')
+        self.Var_J3_Cor_2.place(height= 20, width= 100, x= 550, y= 170)
 
     # Cria os botões na janela
     def Criar_Botoes(self):
@@ -236,12 +239,12 @@ class JanelaPDI(object):
 
     def Comando_SalvarConfiguracao(self):
         # Cria a matriz de configurações de jogo
-        self.Var_ConfiguracoesJogo = np.array([[self.Var_P1_Funcao.current(), self.Var_P1_Cor_1.current(), self.Var_P1_Cor_2.current()],
-                                               [self.Var_P2_Funcao.current(), self.Var_P2_Cor_1.current(), self.Var_P2_Cor_2.current()],
-                                               [self.Var_P3_Funcao.current(), self.Var_P3_Cor_1.current(), self.Var_P3_Cor_2.current()],
+        self.Var_ConfiguracoesJogo = np.array([[self.Var_J1_Funcao.current(), self.Var_J1_Cor_1.current(), self.Var_J1_Cor_2.current()],
+                                               [self.Var_J2_Funcao.current(), self.Var_J2_Cor_1.current(), self.Var_J2_Cor_2.current()],
+                                               [self.Var_J3_Funcao.current(), self.Var_J3_Cor_1.current(), self.Var_J3_Cor_2.current()],
                                                [self.Var_EquipeCiano.get(),    self.Var_EquipeAmarelo.get(), 0],
                                                [self.Var_AtacanteEsquerdo.get(), self.Var_AtacanteDireito.get(),0]])
-        print('Teste Config\n', self.Var_ConfiguracoesJogo)
+        # print('Teste Config\n', self.Var_ConfiguracoesJogo)
 
         # Verifica se a matriz de configurações está completa e se as seleções das equipes e atacantes foram feitas
         Matriz = self.Comando_Salvar_Carregar()
@@ -264,12 +267,17 @@ class JanelaPDI(object):
         try:
             # Carrega as configurações do arquivo 'Game_Settings.txt'
             self.Var_ConfiguracoesJogo = np.loadtxt(self.PastaAtual + '\Game_Settings.txt', dtype=int)
-            self.Var_P1_Funcao.current(self.Var_ConfiguracoesJogo[0][0])
-            self.Var_P1_Cor_1.current(self.Var_ConfiguracoesJogo[0][1])
-            self.Var_P2_Funcao.current(self.Var_ConfiguracoesJogo[1][0])
-            self.Var_P2_Cor_1.current(self.Var_ConfiguracoesJogo[1][1])
-            self.Var_P3_Funcao.current(self.Var_ConfiguracoesJogo[2][0])
-            self.Var_P3_Cor_1.current(self.Var_ConfiguracoesJogo[2][1])
+            self.Var_J1_Funcao.current(self.Var_ConfiguracoesJogo[0][0])
+            self.Var_J1_Cor_1.current(self.Var_ConfiguracoesJogo[0][1])
+            self.Var_J1_Cor_2.current(self.Var_ConfiguracoesJogo[0][2])
+
+            self.Var_J2_Funcao.current(self.Var_ConfiguracoesJogo[1][0])
+            self.Var_J2_Cor_1.current(self.Var_ConfiguracoesJogo[1][1])
+            self.Var_J2_Cor_2.current(self.Var_ConfiguracoesJogo[1][2])
+
+            self.Var_J3_Funcao.current(self.Var_ConfiguracoesJogo[2][0])
+            self.Var_J3_Cor_1.current(self.Var_ConfiguracoesJogo[2][1])
+            self.Var_J3_Cor_2.current(self.Var_ConfiguracoesJogo[2][2])
 
             # Verifica qual equipe foi selecionada e atualiza a seleção
             if self.Var_ConfiguracoesJogo[3][0] == 1:
@@ -297,39 +305,62 @@ class JanelaPDI(object):
     
     def Comando_Salvar_Carregar(self):    
         # Cria uma matriz de configuração de camisas
-        Matriz = np.array([[self.Var_P1_Funcao.current(), self.Var_P1_Cor_1.current(), self.Var_P1_Cor_2.current()],
-                           [self.Var_P2_Funcao.current(), self.Var_P2_Cor_1.current(), self.Var_P2_Cor_2.current()],
-                           [self.Var_P3_Funcao.current(), self.Var_P3_Cor_1.current(), self.Var_P3_Cor_2.current()]])
+        Matriz = np.array([[self.Var_J1_Funcao.current(), self.Var_J1_Cor_1.current(), self.Var_J1_Cor_2.current()],
+                           [self.Var_J2_Funcao.current(), self.Var_J2_Cor_1.current(), self.Var_J2_Cor_2.current()],
+                           [self.Var_J3_Funcao.current(), self.Var_J3_Cor_1.current(), self.Var_J3_Cor_2.current()]])
 
         # Inicializa arrays para as cores das camisas e cores em formato BGR
-        self.CoresCamisas = np.zeros([3, 6])
-        self.CoresCamisas_BGR = np.zeros([3, 3])
+        self.CoresCamisas = np.zeros([3, 12])
+        self.CorCamisa_BGR = np.zeros([3, 6])
         
         for linha in range(len(Matriz)):
             if Matriz[linha][1] == 0:  # Azul
-                self.CoresCamisas[linha] = self.Var_MatrizCor[5][0:]
-                self.CoresCamisas_BGR[linha] = (255, 0, 0)            
+                self.CoresCamisas[linha][:6] = self.Var_MatrizCor[5][0:]
+                self.CorCamisa_BGR[linha][:3] = (255, 0, 0)            
             elif Matriz[linha][1] == 1:  # Magenta
-                self.CoresCamisas[linha] = self.Var_MatrizCor[6][0:]
-                self.CoresCamisas_BGR[linha] = (238, 130, 238)  
+                self.CoresCamisas[linha][:6] = self.Var_MatrizCor[6][0:]
+                self.CorCamisa_BGR[linha][:3] = (238, 130, 238)  
             elif Matriz[linha][1] == 2:  # Verde
-                self.CoresCamisas[linha] = self.Var_MatrizCor[3][0:]
-                self.CoresCamisas_BGR[linha] = (0, 255, 0)  
+                self.CoresCamisas[linha][:6] = self.Var_MatrizCor[3][0:]
+                self.CorCamisa_BGR[linha][:3] = (0, 255, 0)  
             elif Matriz[linha][1] == 3:  # Vermelho
-                self.CoresCamisas[linha] = self.Var_MatrizCor[0][0:]
-                self.CoresCamisas_BGR[linha] = (0, 0, 255) 
+                self.CoresCamisas[linha][:6] = self.Var_MatrizCor[0][0:]
+                self.CorCamisa_BGR[linha][:3] = (0, 0, 255) 
+
+            if Matriz[linha][2] == 0:  # Azul
+                self.CoresCamisas[linha][6:] = self.Var_MatrizCor[5][0:]
+                self.CorCamisa_BGR[linha][3:] = (255, 0, 0)            
+            elif Matriz[linha][2] == 1:  # Magenta
+                self.CoresCamisas[linha][6:] = self.Var_MatrizCor[6][0:]
+                self.CorCamisa_BGR[linha][3:] = (238, 130, 238)  
+            elif Matriz[linha][2] == 2:  # Verde
+                self.CoresCamisas[linha][6:] = self.Var_MatrizCor[3][0:]
+                self.CorCamisa_BGR[linha][3:] = (0, 255, 0)  
+            elif Matriz[linha][2] == 3:  # Vermelho
+                self.CoresCamisas[linha][6:] = self.Var_MatrizCor[0][0:]
+                self.CorCamisa_BGR[linha][3:] = (0, 0, 255)
+        # print('Camisas:\n', self.CorCamisa_BGR)
             
         # Cria os objetos dos robôs da minha equipe (J1, J2 e J3) com as configurações obtidas
-        # self.J1 = MinhaEquipe(self.Var_CorMinhaEquipe_BGR, self.CoresCamisas_BGR[0][0:], self.Var_LadoAtaque, self.Var_P1_Funcao.current())
-        # self.J2 = MinhaEquipe(self.Var_CorMinhaEquipe_BGR, self.CoresCamisas_BGR[1][0:], self.Var_LadoAtaque, self.Var_P2_Funcao.current())
-        # self.J3 = MinhaEquipe(self.Var_CorMinhaEquipe_BGR, self.CoresCamisas_BGR[2][0:], self.Var_LadoAtaque, self.Var_P3_Funcao.current())
+        self.J1 = MY_TEAM(self.Var_CorMinhaEquipe_BGR, self.CorCamisa_BGR[0][:3], self.Var_LadoAtaque, self.Var_J1_Funcao.current())
+        self.J2 = MY_TEAM(self.Var_CorMinhaEquipe_BGR, self.CorCamisa_BGR[1][:3], self.Var_LadoAtaque, self.Var_J2_Funcao.current())
+        self.J3 = MY_TEAM(self.Var_CorMinhaEquipe_BGR, self.CorCamisa_BGR[2][:3], self.Var_LadoAtaque, self.Var_J3_Funcao.current())
         return Matriz
    
     def Comando_IniciarComunicacao(self, tsim=5):
         try:
-            # Inicia a comunicação com o dispositivo serial (COM4) e define o timeout para 2 segundos
-            self.pEsp = serial.Serial('COM4', 115200, timeout=2)
-            if self.Var_Comunicacao == False:
+            # Detecta automaticamente a porta COM do dispositivo ESP
+            porta_serial = self.Detectar_Porta_Serial_ESP()
+
+            if porta_serial is None:
+                self.Limpar_BarraDeStatus()
+                self.Atualizar_BarrraDeStatus("Dispositivo ESP não encontrado")
+                return
+
+            # Inicia a comunicação com o dispositivo serial na porta detectada e define o timeout para 2 segundos
+            self.pEsp = serial.Serial(porta_serial, 115200, timeout=2)
+
+            if not self.Var_Comunicacao:
                 self.pEsp.close()
                 self.pEsp.open()
 
@@ -364,6 +395,15 @@ class JanelaPDI(object):
                 self.Limpar_BarraDeStatus()
                 self.Atualizar_BarrraDeStatus("Conecte o transmissor")
     
+    def Detectar_Porta_Serial_ESP(self):
+        # Lista todas as portas seriais disponíveis
+        portas_disponiveis = list(serial.tools.list_ports.comports())
+        # Procura por uma porta que contenha "ESP" no nome
+        for porta in portas_disponiveis:            
+            if "USB TO UART" in porta.description.upper():
+                return porta.device  # Retorna o nome da porta COM
+        return None  # Retorna None se o dispositivo ESP não for encontrado
+
     def Comando_TesteMecanico(self):
         '''
         Executa uma elipse para cada robô seguir
@@ -378,37 +418,47 @@ class JanelaPDI(object):
         self.Var_TesteMecanico = True
             
         # Define os parâmetros do círculo
-        Rx = 375
-        Ry = 325
-        T = 90
-        center_x = 0  # coordenada x do centro
-        center_y = 0  # coordenada y do centro
+        Rx = 50
+        Ry = 50
+        T = 30
+        
         w = 2*np.pi/T  # Frequência angular (em radianos)
         elapsed_time = np.inf
-        StartCycle = time.time()
+        StartCycle = time.time()      
 
-        self.Obter_DadosJogo()
-
-        p = BDP__3DX(self.Var_CorMinhaEquipe_BGR, self.CoresCamisas_BGR[0][0:], self.Var_LadoAtaque, self.Var_P1_Funcao.current())
+        # p = BDP__3DX(self.Var_CorMinhaEquipe_BGR, self.CorCamisa_BGR[0][0:3], self.Var_LadoAtaque, self.Var_J1_Funcao.current())
 
         while self.Var_TesteMecanico == True:
             # Obtém o tempo decorrido desde o início do ciclo
             elapsed_time = time.time() - StartCycle
+            self.InicioCiclo = time.time()
+            self.Obter_DadosJogo()
 
             # Calcula a posição atual em coordenadas polares 
-            aaaa = np.array([[center_x + Rx * math.cos(w*elapsed_time)],
-                            [center_y + Ry * math.sin(w*elapsed_time)],
-                            [-np.pi/2 +w*elapsed_time]])
+            self.Postura_P1 = np.array([[-500 + Rx * math.cos(w*elapsed_time)],
+                                        [ 000 + Ry * math.sin(w*elapsed_time)],
+                                        [-np.pi/2 - w*elapsed_time]])
+            self.Postura_P2 = np.array([[ 000 + Rx * math.cos(w*elapsed_time)],
+                                        [ 000 + Ry * math.sin(w*elapsed_time)],
+                                        [-np.pi/2 - w*elapsed_time]])
+            self.Postura_P3 = np.array([[ 500 + Rx * math.cos(w*elapsed_time)],
+                                        [ 000 + Ry * math.sin(w*elapsed_time)],
+                                        [-np.pi/2 - w*elapsed_time]])
+            # if com_robo == 0:
+            self.Acao_Jogo()
 
-            print("Teste:",[w, elapsed_time, aaaa])
-
-            Campo_Virtual = self.Comando_DesenhaTudo(aaaa, self.Cor_Jogador_1, self.Postura_P2, self.Cor_Jogador_2, self.Postura_P3, self.Cor_Jogador_3,
+            Campo_Virtual = self.Comando_DesenhaTudo(self.Postura_P1, self.Cor_Jogador_1[:3], self.Postura_P2, self.Cor_Jogador_2[:3], self.Postura_P3, self.Cor_Jogador_3[:3],
+                                                    self.Posicao_Oponente_1, self.Posicao_Oponente_2, self.Posicao_Oponente_3, self.Cor_Oponente, 
+                                                    self.Posicao_Bola, self.Cor_Bola)
+            Campo_Virtual = self.Comando_DesenhaTudo(self.J1.rBDP_pPos_X, self.Cor_Jogador_1[3:], self.J2.rBDP_pPos_X, self.Cor_Jogador_2[3:], self.J3.rBDP_pPos_X, self.Cor_Jogador_3[3:],
                                                     self.Posicao_Oponente_1, self.Posicao_Oponente_2, self.Posicao_Oponente_3, self.Cor_Oponente, 
                                                     self.Posicao_Bola, self.Cor_Bola)
 
             cv2.imshow("Visão da Associação", Campo_Virtual)
             cv2.waitKey(self.Var_FPS)  # Está em 25 milissegundos = 40 fps
             if (cv2.getWindowProperty("Visão da Associação", cv2.WND_PROP_VISIBLE) < 1):
+                break
+            elif 2*T == int(elapsed_time):
                 break
 
         self.Limpar_BarraDeStatus()
@@ -449,9 +499,9 @@ class JanelaPDI(object):
         self.Posicao_Oponente_2 = [Oponente[1][0], Oponente[1][1]]
         self.Posicao_Oponente_3 = [Oponente[2][0], Oponente[2][1]]
 
-        self.Cor_Jogador_1 = self.CoresCamisas_BGR[0][0:]
-        self.Cor_Jogador_2 = self.CoresCamisas_BGR[1][0:]
-        self.Cor_Jogador_3 = self.CoresCamisas_BGR[2][0:]
+        self.Cor_Jogador_1 = self.CorCamisa_BGR[0][0:]
+        self.Cor_Jogador_2 = self.CorCamisa_BGR[1][0:]
+        self.Cor_Jogador_3 = self.CorCamisa_BGR[2][0:]
         self.Cor_Oponente = self.Var_CorEquipeAdversaria_BGR
         self.Cor_Bola = (0, 165, 255)
 
@@ -839,7 +889,8 @@ class JanelaPDI(object):
         self.J2.baixonivel()
 
         self.J3.rBDP_pPos_X[0:, 0] = self.Var_ParametrosJogo[2, 0:]
-        self.J3.rBDP_pPos_Xd[0:, 0] = self.Var_ParametrosJogo[6, 0:]
+        # self.J3.rBDP_pPos_Xd[0:, 0] = self.Var_ParametrosJogo[6, 0:]
+        self.J3.rBDP_pPos_Xd[0:, 0] = self.Postura_P3[0, 0:].T
         self.J3.xtil()
         self.J3.autonivel()
         self.J3.baixonivel()

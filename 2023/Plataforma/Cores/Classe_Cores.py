@@ -214,12 +214,11 @@ class JanelaCores(object):
 
             self.Var_Imagem = ImageTk.PhotoImage(Image.fromarray(self.Var_ConversaoRGB))
             self.Txt_Rotulo.configure(image=self.Var_Imagem)
+            self.Txt_Rotulo.after(self.Var_FPS, self.Comando_HSV)
 
         except Exception as e:
             self.Limpar_BarrraStatus()
             self.Atualizar_BarrraStatus(f"Erro ao processar a imagem: {str(e)}")
-
-            self.Txt_Rotulo.after(self.Var_FPS, self.Comando_HSV)
 
     # Função para identificar objetos de uma cor calibrada na imagem da câmera.
     # A cor é filtrada na imagem usando os valores de calibração, e os contornos dos objetos são encontrados.
