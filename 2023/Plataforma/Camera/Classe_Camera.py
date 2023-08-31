@@ -89,7 +89,7 @@ class JanelaCamera(object):
     # Obtém a lista de câmeras disponíveis no sistema
     def Obter_Cameras_disponiveis(self):
         cameras = []
-        for i in range(5):  # Verificar até 10 possíveis câmeras (pode ajustar esse número conforme necessário)
+        for i in range(10):  # Verificar até 10 possíveis câmeras (pode ajustar esse número conforme necessário)
             cap = cv2.VideoCapture(i, cv2.CAP_DSHOW)
             if cap.isOpened():
                 _, _ = cap.read()
@@ -100,7 +100,7 @@ class JanelaCamera(object):
 
     # Obtém o índice da câmera selecionada
     def Comando_ObterIndiceCamera(self, *arg):
-        self.Var_CameraMode = self.Var_ChosenCamera.current()
+        self.Var_CameraMode = int(self.Var_CameraList[self.Var_ChosenCamera.current()][0])
         if self.Var_CameraOn:
             self.Var_CameraInformation.release()
             self.Var_CameraOn = False

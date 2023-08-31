@@ -169,7 +169,6 @@ class App_BDP:
     #;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     # Encerra o programa
     def Command_Stop(self):
-        JanelaCamera.Comando_Encerrar()
         self.WindowMain.quit()
     #;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     # Faz o loop da janela ?    

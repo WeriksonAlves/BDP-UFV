@@ -87,11 +87,11 @@ class MY_TEAM(object):
     def autonivel(self):
         gl = 1
         ga = 1
-        k1 = 4
+        k1 = 2
         k2 = 1
         
         norma = np.linalg.norm(self.rBDP_pPos_Xtil[0:2,0:])
-        print(norma)
+        # print(norma)
         F_sqrt = self.rBDP_pPos_dXd[0:2,0:] + (k1/np.sqrt(k2**2 + norma**2))*self.rBDP_pPos_Xtil[0:2,0:]
 
         G = np.array([[gl, 0],
