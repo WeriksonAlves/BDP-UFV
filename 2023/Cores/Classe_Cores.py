@@ -180,7 +180,11 @@ class JanelaCores(object):
                 self.Var_LimiteCorInferior = np.array([self.VarM1.get(), self.VarM3.get(), self.VarM5.get()])
                 self.Var_LimiteCorSuperior = np.array([self.VarM2.get(), self.VarM4.get(), self.VarM6.get()])
                 self.Var_MascaraCor = cv2.inRange(self.Var_CorHSV, self.Var_LimiteCorInferior, self.Var_LimiteCorSuperior)
-                self.Var_MascaraCor = cv2.dilate(self.Var_MascaraCor, self.Var_Kernel, iterations=1)                
+                self.Var_MascaraCor = cv2.dilate(self.Var_MascaraCor, self.Var_Kernel, iterations=1)
+                self.Var_MascaraCor = cv2.medianBlur(self.Var_MascaraCor, self.Var_MedianBlur+4)
+
+                # Colocar aqui o  findcontorns
+                                
                 self.Var_AplicacaoCor = cv2.bitwise_and(self.Var_Frames, self.Var_Frames, mask=self.Var_MascaraCor)
 
             elif self.Var_Cor == 7:
@@ -194,7 +198,8 @@ class JanelaCores(object):
                     self.Var_LimiteCorInferior = np.array([Dados[0], Dados[2], Dados[4]])
                     self.Var_LimiteCorSuperior = np.array([Dados[1], Dados[3], Dados[5]])
                     self.Var_MascaraCor = cv2.inRange(self.Var_CorHSV, self.Var_LimiteCorInferior, self.Var_LimiteCorSuperior)
-                    self.Var_MascaraCor = cv2.dilate(self.Var_MascaraCor, self.Var_Kernel, iterations=1)                
+                    self.Var_MascaraCor = cv2.dilate(self.Var_MascaraCor, self.Var_Kernel, iterations=1)  
+                    self.Var_MascaraCor = cv2.medianBlur(self.Var_MascaraCor, self.Var_MedianBlur+4)              
                     MatrizCores[Id] = cv2.bitwise_and(self.Var_Frames, self.Var_Frames, mask=self.Var_MascaraCor)
 
                 self.Var_AplicacaoCor = MatrizCores[0]
@@ -228,7 +233,7 @@ class JanelaCores(object):
         LimiteCorSuperior = np.array([self.Var_MatrizCores[self.Var_Cor][1], self.Var_MatrizCores[self.Var_Cor][3], self.Var_MatrizCores[self.Var_Cor][5]])
         MascaraCor = cv2.inRange(CorHSV, LimiteCorInferior, LimiteCorSuperior)
         MascaraCor = cv2.dilate(MascaraCor, self.Var_Kernel, iterations=1)
-        self.Contornos, _ = cv2.findContours(MascaraCor, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        self.Contornos, _ = cv2.findContours(MascaraCor, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE) # Colocari isto em cima e apagar esta função
 
         self.Limpar_BarrraStatus()
         self.Atualizar_BarrraStatus("Número de itens identificados: %d." % len(self.Contornos))

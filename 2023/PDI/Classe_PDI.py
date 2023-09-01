@@ -11,6 +11,7 @@ from tkinter import *
 from math import dist
 from tkinter import ttk
 
+
 from Controle.Class_Control import*
 
 import cv2
@@ -21,6 +22,7 @@ import os
 import serial.tools.list_ports
 import time
 import math
+import itertools
 
 # Criação da janela responsável pelas configurações da partida
 class JanelaPDI(object):
@@ -103,13 +105,13 @@ class JanelaPDI(object):
    
     # Cria as caixas de seleção (CheckButtons)
     def Criar_CheckButton(self):
-        self.Var_EquipeCiano = IntVar()
+        self.Var_EquipeAzul = IntVar()
         self.Var_EquipeAmarelo = IntVar()
         self.Var_AtacanteEsquerdo = IntVar()
         self.Var_AtacanteDireito = IntVar()
 
         CheBut_Configs = [
-            {"text": " Ciano ", "bg": "cyan",   "variable": self.Var_EquipeCiano,      "command": self.Comando_EquipeCiano},
+            {"text": " Azul ", "bg": "blue",   "variable": self.Var_EquipeAzul,      "command": self.Comando_EquipeAzul},
             {"text": "Amarelo", "bg": "yellow", "variable": self.Var_EquipeAmarelo,    "command": self.Comando_EquipeAmarelo},
             {"text": "<<<====", "bg": "grey",   "variable": self.Var_AtacanteEsquerdo, "command": self.Comando_AtacanteEsquerdo},
             {"text": "====>>>", "bg": "grey",   "variable": self.Var_AtacanteDireito,  "command": self.Comando_AtacanteDireito}
@@ -126,14 +128,14 @@ class JanelaPDI(object):
             checkbutton = Checkbutton(self.Janela, **config)
             checkbutton.place(height=Altura_widget, width=Largura_widget, x=x_position, y=y_Final)
 
-    def Comando_EquipeCiano(self):
+    def Comando_EquipeAzul(self):
         # Define as variáveis de equipe
-        self.Var_EquipeCiano.set(True)
+        self.Var_EquipeAzul.set(True)
         self.Var_EquipeAmarelo.set(False)
 
         # Define a cor da minha equipe como ciano
-        self.Var_CorMinhaEquipe = 4
-        self.Var_CorMinhaEquipe_BGR = (255, 255, 0)
+        self.Var_CorMinhaEquipe = 5
+        self.Var_CorMinhaEquipe_BGR = (255, 0, 0)
 
         # Define a cor da equipe adversária como amarelo
         self.Var_CorEquipeAdversaria = 2
@@ -141,7 +143,7 @@ class JanelaPDI(object):
 
     def Comando_EquipeAmarelo(self):
         # Define as variáveis de equipe
-        self.Var_EquipeCiano.set(False)
+        self.Var_EquipeAzul.set(False)
         self.Var_EquipeAmarelo.set(True)
 
         # Define a cor da minha equipe como amarelo
@@ -149,8 +151,8 @@ class JanelaPDI(object):
         self.Var_CorMinhaEquipe_BGR = (0, 255, 255)
 
         # Define a cor da equipe adversária como ciano
-        self.Var_CorEquipeAdversaria = 4
-        self.Var_CorEquipeAdversaria_BGR = (255, 255, 0)
+        self.Var_CorEquipeAdversaria = 5
+        self.Var_CorEquipeAdversaria_BGR = (255, 0, 0)
 
     def Comando_AtacanteEsquerdo(self):
         # Define as variáveis de ataque
@@ -171,7 +173,7 @@ class JanelaPDI(object):
     # Cria as caixas de opção de cada jogador
     def Criar_ComboBox(self):
         Lista_Funcoes = ['GK', 'DC','ST']     
-        Lista_Camisas = ['Azul', 'Magenta','Verde', 'Vermelho']
+        Lista_Camisas = ['Ciano', 'Magenta','Verde', 'Vermelho']
 
         Funcao_J1 = StringVar()
         Funcao_J2 = StringVar()
@@ -242,14 +244,13 @@ class JanelaPDI(object):
         self.Var_ConfiguracoesJogo = np.array([[self.Var_J1_Funcao.current(), self.Var_J1_Cor_1.current(), self.Var_J1_Cor_2.current()],
                                                [self.Var_J2_Funcao.current(), self.Var_J2_Cor_1.current(), self.Var_J2_Cor_2.current()],
                                                [self.Var_J3_Funcao.current(), self.Var_J3_Cor_1.current(), self.Var_J3_Cor_2.current()],
-                                               [self.Var_EquipeCiano.get(),    self.Var_EquipeAmarelo.get(), 0],
+                                               [self.Var_EquipeAzul.get(),    self.Var_EquipeAmarelo.get(), 0],
                                                [self.Var_AtacanteEsquerdo.get(), self.Var_AtacanteDireito.get(),0]])
-        # print('Teste Config\n', self.Var_ConfiguracoesJogo)
 
         # Verifica se a matriz de configurações está completa e se as seleções das equipes e atacantes foram feitas
         Matriz = self.Comando_Salvar_Carregar()
         
-        if ((-1 in Matriz) == False) and ((self.Var_EquipeCiano.get() == True) or (self.Var_EquipeAmarelo.get() == True)) and ((self.Var_AtacanteEsquerdo.get() == True) or (self.Var_AtacanteDireito.get() == True)):
+        if ((-1 in Matriz) == False) and ((self.Var_EquipeAzul.get() == True) or (self.Var_EquipeAmarelo.get() == True)) and ((self.Var_AtacanteEsquerdo.get() == True) or (self.Var_AtacanteDireito.get() == True)):
             self.Limpar_BarraDeStatus()
             self.Atualizar_BarrraDeStatus("Salvando calibração")
 
@@ -281,7 +282,7 @@ class JanelaPDI(object):
 
             # Verifica qual equipe foi selecionada e atualiza a seleção
             if self.Var_ConfiguracoesJogo[3][0] == 1:
-                self.Comando_EquipeCiano()
+                self.Comando_EquipeAzul()
             elif self.Var_ConfiguracoesJogo[3][1] == 1:
                 self.Comando_EquipeAmarelo()
             else:
@@ -314,9 +315,9 @@ class JanelaPDI(object):
         self.CorCamisa_BGR = np.zeros([3, 6])
         
         for linha in range(len(Matriz)):
-            if Matriz[linha][1] == 0:  # Azul
-                self.CoresCamisas[linha][:6] = self.Var_MatrizCor[5][0:]
-                self.CorCamisa_BGR[linha][:3] = (255, 0, 0)            
+            if Matriz[linha][1] == 0:  # Ciano
+                self.CoresCamisas[linha][:6] = self.Var_MatrizCor[4][0:]
+                self.CorCamisa_BGR[linha][:3] = (255, 255, 0)            
             elif Matriz[linha][1] == 1:  # Magenta
                 self.CoresCamisas[linha][:6] = self.Var_MatrizCor[6][0:]
                 self.CorCamisa_BGR[linha][:3] = (238, 130, 238)  
@@ -327,9 +328,9 @@ class JanelaPDI(object):
                 self.CoresCamisas[linha][:6] = self.Var_MatrizCor[0][0:]
                 self.CorCamisa_BGR[linha][:3] = (0, 0, 255) 
 
-            if Matriz[linha][2] == 0:  # Azul
-                self.CoresCamisas[linha][6:] = self.Var_MatrizCor[5][0:]
-                self.CorCamisa_BGR[linha][3:] = (255, 0, 0)            
+            if Matriz[linha][2] == 0:  # Ciano
+                self.CoresCamisas[linha][6:] = self.Var_MatrizCor[4][0:]
+                self.CorCamisa_BGR[linha][3:] = (255, 255, 0)            
             elif Matriz[linha][2] == 1:  # Magenta
                 self.CoresCamisas[linha][6:] = self.Var_MatrizCor[6][0:]
                 self.CorCamisa_BGR[linha][3:] = (238, 130, 238)  
@@ -339,7 +340,6 @@ class JanelaPDI(object):
             elif Matriz[linha][2] == 3:  # Vermelho
                 self.CoresCamisas[linha][6:] = self.Var_MatrizCor[0][0:]
                 self.CorCamisa_BGR[linha][3:] = (0, 0, 255)
-        # print('Camisas:\n', self.CorCamisa_BGR)
             
         # Cria os objetos dos robôs da minha equipe (J1, J2 e J3) com as configurações obtidas
         self.J1 = MY_TEAM(self.Var_CorMinhaEquipe_BGR, self.CorCamisa_BGR[0][:3], self.Var_LadoAtaque, self.Var_J1_Funcao.current())
@@ -347,7 +347,7 @@ class JanelaPDI(object):
         self.J3 = MY_TEAM(self.Var_CorMinhaEquipe_BGR, self.CorCamisa_BGR[2][:3], self.Var_LadoAtaque, self.Var_J3_Funcao.current())
         return Matriz
    
-    def Comando_IniciarComunicacao(self, tsim=5):
+    def Comando_IniciarComunicacao(self, tsim=3):
         try:
             # Detecta automaticamente a porta COM do dispositivo ESP
             porta_serial = self.Detectar_Porta_Serial_ESP()
@@ -375,9 +375,9 @@ class JanelaPDI(object):
                     elif t > 1*tsim/5: n = 40
                     else: n = 20
 
-                    self.pEsp.write([1, 2, int(150+n), int(150+n), int(150+n), int(150+n), 150, 150, 3, 10])
+                    self.pEsp.write([1, 2, int(150+n), int(150+n), int(150+n), int(150+n), int(150+n), int(150+n), 3, 10])
                     if t > tsim:
-                        self.pEsp.write([1, 2, int(0), int(0), int(0), int(0), 150, 150, 3, 10])
+                        self.pEsp.write([1, 2, int(0), int(0), int(0), int(0), int(0), int(0), 3, 10])
                         break
 
                 # Ativa a variável de controle de comunicação e atualiza a barra de status
@@ -416,41 +416,37 @@ class JanelaPDI(object):
         self.Atualizar_BarrraDeStatus("Teste mecânico iniciado")
 
         self.Var_TesteMecanico = True
-            
+        self.Obter_DadosJogo()
         # Define os parâmetros do círculo
-        Rx = 50
-        Ry = 50
+        Rx = 250
+        Ry = 250
         T = 30
-        
+        simulacao = 0
         w = 2*np.pi/T  # Frequência angular (em radianos)
         elapsed_time = np.inf
         StartCycle = time.time()      
-
-        # p = BDP__3DX(self.Var_CorMinhaEquipe_BGR, self.CorCamisa_BGR[0][0:3], self.Var_LadoAtaque, self.Var_J1_Funcao.current())
 
         while self.Var_TesteMecanico == True:
             # Obtém o tempo decorrido desde o início do ciclo
             elapsed_time = time.time() - StartCycle
             self.InicioCiclo = time.time()
             self.Obter_DadosJogo()
-
             # Calcula a posição atual em coordenadas polares 
-            self.Postura_P1 = np.array([[-500 + Rx * math.cos(w*elapsed_time)],
-                                        [ 000 + Ry * math.sin(w*elapsed_time)],
-                                        [-np.pi/2 - w*elapsed_time]])
-            self.Postura_P2 = np.array([[ 000 + Rx * math.cos(w*elapsed_time)],
-                                        [ 000 + Ry * math.sin(w*elapsed_time)],
-                                        [-np.pi/2 - w*elapsed_time]])
-            self.Postura_P3 = np.array([[ 500 + Rx * math.cos(w*elapsed_time)],
-                                        [ 000 + Ry * math.sin(w*elapsed_time)],
-                                        [-np.pi/2 - w*elapsed_time]])
-            # if com_robo == 0:
-            self.Acao_Jogo()
+            self.PosDesejada_P1 = np.array([[np.int64(-500 + Rx * math.cos(w*elapsed_time))],
+                                            [np.int64( 000 + Ry * math.sin(w*elapsed_time))],
+                                            [-np.pi/2 - w*elapsed_time]])
+            self.PosDesejada_P2 = np.array([[np.int64( 000 + Rx * math.cos(w*elapsed_time))],
+                                            [np.int64( 000 + Ry * math.sin(w*elapsed_time))],
+                                            [-np.pi/2 - w*elapsed_time]])
+            self.PosDesejada_P3 = np.array([[np.int64( 500 + Rx * math.cos(w*elapsed_time))],
+                                            [np.int64( 000 + Ry * math.sin(w*elapsed_time))],
+                                            [-np.pi/2 - w*elapsed_time]])
+            
+            if 2*T == int(elapsed_time):
+                self.Var_TesteMecanico = False
 
-            Campo_Virtual = self.Comando_DesenhaTudo(self.Postura_P1, self.Cor_Jogador_1[:3], self.Postura_P2, self.Cor_Jogador_2[:3], self.Postura_P3, self.Cor_Jogador_3[:3],
-                                                    self.Posicao_Oponente_1, self.Posicao_Oponente_2, self.Posicao_Oponente_3, self.Cor_Oponente, 
-                                                    self.Posicao_Bola, self.Cor_Bola)
-            Campo_Virtual = self.Comando_DesenhaTudo(self.J1.rBDP_pPos_X, self.Cor_Jogador_1[3:], self.J2.rBDP_pPos_X, self.Cor_Jogador_2[3:], self.J3.rBDP_pPos_X, self.Cor_Jogador_3[3:],
+            # if simulacao == 1:
+            Campo_Virtual = self.Comando_DesenhaTudo(self.PosDesejada_P1, self.Cor_Jogador_1, self.PosDesejada_P2, self.Cor_Jogador_2, self.PosDesejada_P3, self.Cor_Jogador_3,
                                                     self.Posicao_Oponente_1, self.Posicao_Oponente_2, self.Posicao_Oponente_3, self.Cor_Oponente, 
                                                     self.Posicao_Bola, self.Cor_Bola)
 
@@ -458,9 +454,27 @@ class JanelaPDI(object):
             cv2.waitKey(self.Var_FPS)  # Está em 25 milissegundos = 40 fps
             if (cv2.getWindowProperty("Visão da Associação", cv2.WND_PROP_VISIBLE) < 1):
                 break
-            elif 2*T == int(elapsed_time):
-                break
+            # else:
+            self.J1.rBDP_pPos_X[0:, 0] = self.Var_ParametrosJogo[0, 0:]
+            self.J1.rBDP_pPos_Xd[0:, 0] = self.PosDesejada_P1[0:,0]
+            self.J1.xtil()
+            self.J1.autonivel()
+            self.J1.baixonivel()
 
+            self.J2.rBDP_pPos_X[0:, 0] = self.Var_ParametrosJogo[1, 0:]
+            self.J2.rBDP_pPos_Xd[0:, 0] = self.Var_ParametrosJogo[6, 0]#self.PosDesejada_P2[0:,0]*-1
+            self.J2.xtil()
+            self.J2.autonivel()
+            self.J2.baixonivel()
+
+            self.J3.rBDP_pPos_X[0:, 0] = self.Var_ParametrosJogo[2, 0:]
+            self.J3.rBDP_pPos_Xd[0:, 0] = self.PosDesejada_P3[0:,0]
+            self.J3.xtil()
+            self.J3.autonivel()
+            self.J3.baixonivel()
+
+            self.Acao_Jogo()
+        
         self.Limpar_BarraDeStatus()
         self.Atualizar_BarrraDeStatus('Partida Encerrada')
     
@@ -468,10 +482,29 @@ class JanelaPDI(object):
         self.Var_Jogando = True
         self.Limpar_BarraDeStatus()
         self.Atualizar_BarrraDeStatus("Partida Iniciada")
-
+        self.Obter_DadosJogo()
         while self.Var_Jogando == True:
             self.InicioCiclo = time.time()
             self.Obter_DadosJogo()
+
+            # self.J1.rBDP_pPos_X[0:, 0] = self.Var_ParametrosJogo[0, 0:]
+            # self.J1.rBDP_pPos_Xd[0:, 0] = self.Var_ParametrosJogo[6, 0:]
+            # self.J1.xtil()
+            # self.J1.autonivel()
+            # self.J1.baixonivel()
+
+            # self.J2.rBDP_pPos_X[0:, 0] = self.Var_ParametrosJogo[1, 0:]
+            # self.J2.rBDP_pPos_Xd[0:, 0] = self.Var_ParametrosJogo[6, 0:]
+            # self.J2.xtil()
+            # self.J2.autonivel()
+            # self.J2.baixonivel()
+
+            # self.J3.rBDP_pPos_X[0:, 0] = self.Var_ParametrosJogo[2, 0:]
+            # self.J3.rBDP_pPos_Xd[0:, 0] = self.Var_ParametrosJogo[6, 0:]
+            # self.J3.xtil()
+            # self.J3.autonivel()
+            # self.J3.baixonivel()
+
             # self.Acao_Jogo()
 
         self.Limpar_BarraDeStatus()
@@ -482,65 +515,91 @@ class JanelaPDI(object):
         frames = cv2.resize(cv2.medianBlur(frames, self.Var_MedianBlur), [640, 480])  # Aplica um filtro de mediana
 
         # Posição da bola em pixels
-        self.Posicao_Bola = self.Comando_BuscarBola(frames, self.Var_MatrizCor[1][0:])
+        self.Posicao_Bola = self.Comando_BuscarBola(frames, self.Var_MatrizCor[1][0:],100,200)        
 
         # Posição das cores da minha equipe e do oponente
-        MinhaEquipe = self.Comando_BuscarPosicaoCor(frames, self.Var_MatrizCor[self.Var_CorMinhaEquipe][0:])
-        Oponente = self.Comando_BuscarPosicaoCor_Opp(frames, self.Var_MatrizCor[self.Var_CorEquipeAdversaria][0:])
+        MinhaEquipe = self.Comando_BuscarPosicaoCor(frames, self.Var_MatrizCor[self.Var_CorMinhaEquipe][0:],150,300)
+        Oponente = self.Comando_BuscarPosicaoCor_Opp(frames, self.Var_MatrizCor[self.Var_CorEquipeAdversaria][0:],150,300)
 
         # Posição das cores dos meus jogadores
-        Centroide_P1 = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[0][0:])
-        Centroide_P2 = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[1][0:])
-        Centroide_P3 = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[2][0:])
+        P1_Centroide_Cor_1 = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[0][:6],50,150)
+        P2_Centroide_Cor_1 = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[1][:6],50,150)
+        P3_Centroide_Cor_1 = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[2][:6],50,150)
 
-        self.Postura_P1, self.Postura_P2, self.Postura_P3 = self.Comando_Associar_Camisas(MinhaEquipe, Centroide_P1, Centroide_P2, Centroide_P3)
+        P1_Centroide_Cor_2 = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[0][6:],50,150)
+        P2_Centroide_Cor_2 = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[1][6:],50,150)
+        P3_Centroide_Cor_2 = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[2][6:],50,150)
+
+        # Posição do centroide de identificação de cada jogador
+        Centroide_Cor_P1,_ = self.Comando_AssociarCores(P1_Centroide_Cor_1,P1_Centroide_Cor_2)
+        # Centroide_Cor_P2,_ = self.Comando_AssociarCores(P2_Centroide_Cor_1,P2_Centroide_Cor_2)
+        # Centroide_Cor_P3,_ = self.Comando_AssociarCores(P3_Centroide_Cor_1,P3_Centroide_Cor_2)
+
+        # Posição do centroide do robo
+        # P1_Pos = self.Comando_AssociarCores(MinhaEquipe,Centroide_Cor_P1)
+        # P2_Pos = self.Comando_AssociarCores(MinhaEquipe,Centroide_Cor_P2)
+        # P3_Pos = self.Comando_AssociarCores(MinhaEquipe,Centroide_Cor_P3)
+
+        # Orientação de cada jogador
+        Postura_P1 = self.Comando_EncontraPostura(MinhaEquipe,Centroide_Cor_P1)
+        
+        # P2_Ang = self.Comando_EncontraPostura(MinhaEquipe,Centroide_Cor_P2)
+        # P3_Ang = self.Comando_EncontraPostura(MinhaEquipe,Centroide_Cor_P3)
+
+
+        
+        # self.Postura_P1, self.Postura_P2, self.Postura_P3 = self.Comando_EncontraPostura(MinhaEquipe, Centroide_Cor_P1, Centroide_Cor_P2, Centroide_Cor_P3)
 
         self.Posicao_Oponente_1 = [Oponente[0][0], Oponente[0][1]]
         self.Posicao_Oponente_2 = [Oponente[1][0], Oponente[1][1]]
         self.Posicao_Oponente_3 = [Oponente[2][0], Oponente[2][1]]
 
-        self.Cor_Jogador_1 = self.CorCamisa_BGR[0][0:]
-        self.Cor_Jogador_2 = self.CorCamisa_BGR[1][0:]
-        self.Cor_Jogador_3 = self.CorCamisa_BGR[2][0:]
+        self.Cor_Jogador_1 = self.CorCamisa_BGR[0][:3]
+        self.Cor_Jogador_2 = self.CorCamisa_BGR[1][:3]
+        self.Cor_Jogador_3 = self.CorCamisa_BGR[2][:3]
         self.Cor_Oponente = self.Var_CorEquipeAdversaria_BGR
         self.Cor_Bola = (0, 165, 255)
 
-        if(len(self.Postura_P1) != 0):
-            self.Var_ParametrosJogo[0, 0:] = np.array(self.Postura_P1).T
-            self.Var_ParametrosJogo[0, 0] = self.Var_ParametrosJogo[0, 0] * -1
-        if(len(self.Postura_P2) != 0):
-            self.Var_ParametrosJogo[1, 0:] = np.array(self.Postura_P2).T
-            self.Var_ParametrosJogo[1, 0] = self.Var_ParametrosJogo[1, 0] * -1
-        if(len(self.Postura_P3) != 0):
-            self.Var_ParametrosJogo[2, 0:] = np.array(self.Postura_P3).T
-            self.Var_ParametrosJogo[2, 0] = self.Var_ParametrosJogo[2, 0] * -1
-        if(len(self.Posicao_Oponente_1) != 0):
-            self.Var_ParametrosJogo[3, 0:2] = np.array(self.Posicao_Oponente_1).T
-            self.Var_ParametrosJogo[3, 0] = self.Var_ParametrosJogo[3, 0] * -1
-        if(len(self.Posicao_Oponente_2) != 0):
-            self.Var_ParametrosJogo[4, 0:2] = np.array(self.Posicao_Oponente_2).T
-            self.Var_ParametrosJogo[4, 0] = self.Var_ParametrosJogo[4, 0] * -1
-        if(len(self.Posicao_Oponente_3) != 0):
-            self.Var_ParametrosJogo[5, 0:2] = np.array(self.Posicao_Oponente_3).T
-            self.Var_ParametrosJogo[5, 0] = self.Var_ParametrosJogo[5, 0] * -1
-        if(len(self.Posicao_Bola) != 0):
-            self.Var_ParametrosJogo[6, 0:2] = self.Posicao_Bola.T
-            self.Var_ParametrosJogo[6, 0] = self.Var_ParametrosJogo[6, 0] * -1
-    
-    def Comando_BuscarBola(self, quadro, vetor_limites, AreaMaxima=200, AreaMinima=100):
-        # Encontra as posições de todos os objetos da cor pré-determinada na imagem segmentada.
-        Area_Atual = 0
-        Posicao_Bola = np.ones((3, 1))
+        # if(len(self.Postura_P1) != 0):
+        #     self.Var_ParametrosJogo[0, 0:] = np.array(self.Postura_P1).T
+        #     self.Var_ParametrosJogo[0, 0] = self.Var_ParametrosJogo[0, 0] * -1
+        # if(len(self.Postura_P2) != 0):
+        #     self.Var_ParametrosJogo[1, 0:] = np.array(self.Postura_P2).T
+        #     self.Var_ParametrosJogo[1, 0] = self.Var_ParametrosJogo[1, 0] * -1
+        # if(len(self.Postura_P3) != 0):
+        #     self.Var_ParametrosJogo[2, 0:] = np.array(self.Postura_P3).T
+        #     self.Var_ParametrosJogo[2, 0] = self.Var_ParametrosJogo[2, 0] * -1
+        # if(len(self.Posicao_Oponente_1) != 0):
+        #     self.Var_ParametrosJogo[3, 0:2] = np.array(self.Posicao_Oponente_1).T
+        #     self.Var_ParametrosJogo[3, 0] = self.Var_ParametrosJogo[3, 0] * -1
+        # if(len(self.Posicao_Oponente_2) != 0):
+        #     self.Var_ParametrosJogo[4, 0:2] = np.array(self.Posicao_Oponente_2).T
+        #     self.Var_ParametrosJogo[4, 0] = self.Var_ParametrosJogo[4, 0] * -1
+        # if(len(self.Posicao_Oponente_3) != 0):
+        #     self.Var_ParametrosJogo[5, 0:2] = np.array(self.Posicao_Oponente_3).T
+        #     self.Var_ParametrosJogo[5, 0] = self.Var_ParametrosJogo[5, 0] * -1
+        # if(len(self.Posicao_Bola) != 0):
+        #     self.Var_ParametrosJogo[6, 0:2] = self.Posicao_Bola.T
+        #     self.Var_ParametrosJogo[6, 0] = self.Var_ParametrosJogo[6, 0] * -1
 
+    def Camando_CriaMascara(self,quadro,vetor_limites):
+        # Cria a mascara apartir do vetor de limites em HSV
         CorHSV = cv2.cvtColor(quadro, cv2.COLOR_BGR2HSV)
         LimiteCorInferior = np.array([vetor_limites[0], vetor_limites[2], vetor_limites[4]])
         LimiteCorSuperior = np.array([vetor_limites[1], vetor_limites[3], vetor_limites[5]])
+        MascaraCor = cv2.inRange(CorHSV, LimiteCorInferior, LimiteCorSuperior)
+        MascaraCor = cv2.dilate(MascaraCor, self.Var_Kernel, iterations=1)
+        MascaraCor = cv2.medianBlur(MascaraCor, self.Var_MedianBlur+4)
+        return MascaraCor
 
-        CorHSV = cv2.inRange(CorHSV, LimiteCorInferior, LimiteCorSuperior)
-        CorHSV = cv2.dilate(CorHSV, self.Var_Kernel, iterations=1)  # testar cv2.MORPH_CLOSE e usar filtro cv2.medianblur
-        # CorHSV = cv2.morphologyEx(CorHSV, cv2.MORPH_OPEN, self.Var_ElementoEstruturante)  # testar cv2.MORPH_CLOSE e usar filtro cv2.medianblur
+    def Comando_BuscarBola(self, quadro, vetor_limites, AreaMinima=100, AreaMaxima=200):
+        # Encontra as posições de todos os objetos da cor pré-determinada na imagem segmentada.
+        Area_Atual = 0
+        Posicao_Bola = np.ones((3, 1))
+        
+        MascaraCor = self.Camando_CriaMascara(quadro,vetor_limites)
 
-        Contornos, _ = cv2.findContours(CorHSV, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        Contornos, _ = cv2.findContours(MascaraCor, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         Tamanho_Contornos = len(Contornos)
 
         if Tamanho_Contornos > 0:
@@ -566,20 +625,12 @@ class JanelaPDI(object):
             Posicao_Bola = []
             return Posicao_Bola
 
-    def Comando_BuscarPosicaoCor(self, quadro, vetor_limites, AreaMinima=200, AreaMaxima=500):
+    def Comando_BuscarPosicaoCor(self, quadro, vetor_limites, AreaMinima=0, AreaMaxima=500):
         # Encontra as posições de todos os objetos da cor pré-determinada na imagem segmentada.
         PosicaoCor = []
         PosicaoCorBGR = np.ones((3, 1))
-
-        CorHSV = cv2.cvtColor(quadro, cv2.COLOR_BGR2HSV)
-        LimiteCorInferior = np.array([vetor_limites[0], vetor_limites[2], vetor_limites[4]])
-        LimiteCorSuperior = np.array([vetor_limites[1], vetor_limites[3], vetor_limites[5]])
-
-        CorHSV = cv2.inRange(CorHSV, LimiteCorInferior, LimiteCorSuperior)
-        CorHSV = cv2.dilate(CorHSV, self.Var_Kernel, iterations=1)  # testar cv2.MORPH_CLOSE e usar filtro cv2.medianblur
-        # PosicaoCor = cv2.morphologyEx(PosicaoCor, cv2.MORPH_OPEN, Kernel)  # testar cv2.MORPH_CLOSE e usar filtro cv2.medianblur
-
-        contornos, _ = cv2.findContours(CorHSV, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        MascaraCor = self.Camando_CriaMascara(quadro,vetor_limites)
+        contornos, _ = cv2.findContours(MascaraCor, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         Tamanho_Contornos = len(contornos)
 
         if Tamanho_Contornos > 0:
@@ -596,28 +647,21 @@ class JanelaPDI(object):
                         PosicaoCorBGR[0, 0] = x[0]
                         PosicaoCorBGR[1, 0] = x[1]
                         x = self.Var_MatrizTransfPerspectiva @ PosicaoCorBGR
-                        PosicaoCor.append(x[0:2, 0:])
+                        PosicaoCor.append(x[:2])
                 except:
                     pass
         else:
             PosicaoCor = []
         return PosicaoCor
 
-    def Comando_BuscarPosicaoCor_Opp(self, quadro, vetor_limites, AreaMinima=200, AreaMaxima=500):
+    def Comando_BuscarPosicaoCor_Opp(self, quadro, vetor_limites, AreaMinima=0, AreaMaxima=500):
         # Encontra as posições de todos os objetos da cor pré-determinada na imagem segmentada.
         PosicaoCor_Opp = []
         PosicaoCorBGR = np.ones((3, 1))
-
-        CorHSV = cv2.cvtColor(quadro, cv2.COLOR_BGR2HSV)
-        LimiteCorInferior = np.array([vetor_limites[0], vetor_limites[2], vetor_limites[4]])
-        LimiteCorSuperior = np.array([vetor_limites[1], vetor_limites[3], vetor_limites[5]])
-
-        CorHSV = cv2.inRange(CorHSV, LimiteCorInferior, LimiteCorSuperior)
-        CorHSV = cv2.dilate(CorHSV, self.Var_Kernel, iterations=1)  # testar cv2.MORPH_CLOSE e usar filtro cv2.medianblur
-        # PosicaoCor_Opp = cv2.morphologyEx(PosicaoCor_Opp, cv2.MORPH_OPEN, Kernel)  # testar cv2.MORPH_CLOSE e usar filtro cv2.medianblur
-
-        contornos, _ = cv2.findContours(CorHSV, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        MascaraCor = self.Camando_CriaMascara(quadro,vetor_limites)
+        contornos, _ = cv2.findContours(MascaraCor, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         Tamanho_Contornos = len(contornos)
+
         VectorFinal = []
 
         if Tamanho_Contornos > 0:
@@ -659,12 +703,60 @@ class JanelaPDI(object):
             VectorFinal.append(np.array([300, 685]))
             return VectorFinal
 
-    def Comando_Associar_Camisas(self, Posicao_Cor_Time, Posicao_Camisetas_Jogador_1, Posicao_Camisetas_Jogador_2, Posicao_Camisetas_Jogador_3):
-        Postura_Jogador_1 = self.Comando_AssociarCamisetaUnica(Posicao_Cor_Time, Posicao_Camisetas_Jogador_1)
-        Postura_Jogador_2 = self.Comando_AssociarCamisetaUnica(Posicao_Cor_Time, Posicao_Camisetas_Jogador_2)
-        Postura_Jogador_3 = self.Comando_AssociarCamisetaUnica(Posicao_Cor_Time, Posicao_Camisetas_Jogador_3)
+    def Comando_CalcDistance(self,point1, point2):
+        return np.linalg.norm(np.array(point2) - np.array(point1))
+
+    def Comando_CalcCenter(self,point1, point2):
+        return (np.array(point1) + np.array(point2)) / 2
+
+    def Comando_AssociarCores(self,VetorCor1,VetorCor2,Dist=80):
+        # Obtem a posição das duas cores de jogadores mais proximas
+        Centroide_Cor = []
+        Dados = []
+        
+        object_positions = list(VetorCor1) # Lista de posições (x, y) dos objetos
+        for col in range(np.shape(VetorCor2)[0]):
+            object_positions.append(VetorCor2[col])       
+        
+        num_to_combine = 2 # Número de objetos para combinar
+
+        # Calcula todas as combinações de objetos mais próximos
+        closest_combinations = list(itertools.combinations(object_positions, num_to_combine))
+
+        # Ordena as combinações com base na distância entre os objetos
+        closest_combinations.sort(key=lambda combo: self.Comando_CalcDistance(combo[0], combo[1]))
+
+        # Imprime as combinações mais próximas e seus centros
+        for combo in closest_combinations:
+            combo_distance = self.Comando_CalcDistance(combo[0], combo[1])            
+            if combo_distance > Dist:
+                break
+            combo_center = self.Comando_CalcCenter(combo[0], combo[1])            
+            Centroide_Cor.append(combo_center)
+            Dados.append(np.squeeze(np.stack((combo[0], combo[1]), axis=-1)))            
+        return Centroide_Cor, Dados
+
+    def Comando_EncontraPostura(self,VetorCorTime,Centroide_Cor):
+        NumCorTime = np.shape(VetorCorTime)[0]  # Número de jogadores
+        NumCorJog = np.shape(Centroide_Cor)[0]  # Número de camisetas
+        try:# (NumCorTime > 0) and (NumCorJog > 0):
+            # Encontra o angulo entre a cor do time e o centroide da cores do respectivo jogador        
+            Pos, Dados = self.Comando_AssociarCores(VetorCorTime,Centroide_Cor)
+            vetor_dif = Dados[0][:,1] - Dados[0][:,0] # Vetor que aponta do centroide das cores do jogador 1 para a cor do time
+            angulo_rad = np.arctan2(vetor_dif[1], vetor_dif[0]) # Calcula o ângulo entre o vetor e o eixo X da imagem (em radianos)
+            Postura = np.array([[Pos[0][0][0]],[Pos[0][1][0]],[angulo_rad]])
+            print(f"X: {Postura[0]}, Y:{Postura[1]}, Ang(º):{np.degrees(angulo_rad)}")
+        except:#else:
+            Postura = []
+            print(f"X: [], Y: [], Ang(º): []")
+        return Postura
+
+    # def Comando_EncontraPostura(self, Posicao_Cor_Time, Posicao_Camisetas_Jogador_1, Posicao_Camisetas_Jogador_2, Posicao_Camisetas_Jogador_3):
+    #     Postura_Jogador_1 = self.Comando_AssociarCamisetaUnica(Posicao_Cor_Time, Posicao_Camisetas_Jogador_1)
+    #     Postura_Jogador_2 = self.Comando_AssociarCamisetaUnica(Posicao_Cor_Time, Posicao_Camisetas_Jogador_2)
+    #     Postura_Jogador_3 = self.Comando_AssociarCamisetaUnica(Posicao_Cor_Time, Posicao_Camisetas_Jogador_3)
             
-        return Postura_Jogador_1, Postura_Jogador_2, Postura_Jogador_3
+    #     return Postura_Jogador_1, Postura_Jogador_2, Postura_Jogador_3
         
     def Comando_AssociarCamisetaUnica(self, Posicao_Cor_Time, Posicao_Camisetas_Jogador, Distancia_Maxima = 80):
         # A função deve receber posição transformada pela matriz de transformação de perspectiva.
@@ -781,8 +873,7 @@ class JanelaPDI(object):
     #     X = X + 900
     #     Y = Y + 750
     #     coordenadas_centro = (int(X), int(Y))
-    #     espessura = 10
-        
+    #     espessura = 10        
     #     if tipo == "seta":
     #         orientacao = kwargs.get("orientacao", 0)
     #         comprimento = kwargs.get("comprimento", 60)
@@ -873,28 +964,6 @@ class JanelaPDI(object):
         return Campo_Virtual
 
     def Acao_Jogo(self):
-        # B = BALL()
-        # B.Bola_X[0:, 0] = self.Var_Game_Parameters[6, 0:2]
-
-        self.J1.rBDP_pPos_X[0:, 0] = self.Var_ParametrosJogo[0, 0:]
-        self.J1.rBDP_pPos_Xd[0:, 0] = self.Var_ParametrosJogo[6, 0:]
-        self.J1.xtil()
-        self.J1.autonivel()
-        self.J1.baixonivel()
-
-        self.J2.rBDP_pPos_X[0:, 0] = self.Var_ParametrosJogo[1, 0:]
-        self.J2.rBDP_pPos_Xd[0:, 0] = self.Var_ParametrosJogo[6, 0:]
-        self.J2.xtil()
-        self.J2.autonivel()
-        self.J2.baixonivel()
-
-        self.J3.rBDP_pPos_X[0:, 0] = self.Var_ParametrosJogo[2, 0:]
-        # self.J3.rBDP_pPos_Xd[0:, 0] = self.Var_ParametrosJogo[6, 0:]
-        self.J3.rBDP_pPos_Xd[0:, 0] = self.Postura_P3[0, 0:].T
-        self.J3.xtil()
-        self.J3.autonivel()
-        self.J3.baixonivel()
-
         print('1: ', self.J1.rBDP_pSC_PWM[0], self.J1.rBDP_pSC_PWM[1], '2: ', self.J2.rBDP_pSC_PWM[0], self.J2.rBDP_pSC_PWM[1], '3: ', self.J3.rBDP_pSC_PWM[0], self.J3.rBDP_pSC_PWM[1])
         
         try:
