@@ -513,25 +513,29 @@ class JanelaPDI(object):
         self.Limpar_BarraDeStatus()
         self.Atualizar_BarrraDeStatus('Partida Encerrada')
     
+    def Comando_EncerrarPartida(self):
+        self.Var_Jogando = False
+    
     def Obter_DadosJogo(self):
         _, frames = self.Var_InformacoesCamera.read()
         frames = cv2.resize(cv2.medianBlur(frames, self.Var_MedianBlur), [640, 480])  # Aplica um filtro de mediana
 
         # Posição da bola em pixels
-        self.Posicao_Bola = self.Comando_BuscarBola(frames, self.Var_MatrizCor[1][0:],100,200)        
+        Ball_Pos = self.Comando_BuscarBola(frames, self.Var_MatrizCor[1][0:],100,200)        
+        Ball_Pos = self.Comando_BuscarPosicaoCor(frames,self.Var_MatrizCor[1][0:],100,200)
 
         # Posição das cores da minha equipe e do oponente
-        MinhaEquipe = self.Comando_BuscarPosicaoCor(frames, self.Var_MatrizCor[self.Var_CorMinhaEquipe][0:],150,300)
+        MinhaEquipe,_ = self.Comando_BuscarPosicaoCor(frames, self.Var_MatrizCor[self.Var_CorMinhaEquipe][0:],150,300)
         Oponente = self.Comando_BuscarPosicaoCor_Opp(frames, self.Var_MatrizCor[self.Var_CorEquipeAdversaria][0:],150,300)
 
         # Posição das cores dos meus jogadores
-        P1_Centroide_Cor_1 = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[0][:6],50,150)
-        P2_Centroide_Cor_1 = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[1][:6],50,150)
-        P3_Centroide_Cor_1 = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[2][:6],50,150)
+        P1_Centroide_Cor_1,_ = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[0][:6],50,150)
+        P2_Centroide_Cor_1,_ = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[1][:6],50,150)
+        P3_Centroide_Cor_1,_ = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[2][:6],50,150)
 
-        P1_Centroide_Cor_2 = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[0][6:],50,150)
-        P2_Centroide_Cor_2 = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[1][6:],50,150)
-        P3_Centroide_Cor_2 = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[2][6:],50,150)
+        P1_Centroide_Cor_2,_ = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[0][6:],50,150)
+        P2_Centroide_Cor_2,_ = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[1][6:],50,150)
+        P3_Centroide_Cor_2,_ = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[2][6:],50,150)
 
         # Posição do centroide de identificação de cada jogador
         Centroide_Cor_P1,_ = self.Comando_AssociarCores(P1_Centroide_Cor_1,P1_Centroide_Cor_2,80)
@@ -539,41 +543,27 @@ class JanelaPDI(object):
         # Centroide_Cor_P3,_ = self.Comando_AssociarCores(P3_Centroide_Cor_1,P3_Centroide_Cor_2)
 
         # Postura do robo
-        Postura_P1 = self.Comando_EncontraPostura(MinhaEquipe,Centroide_Cor_P1)
-        Postura_P2 = self.Comando_EncontraPostura(MinhaEquipe,Centroide_Cor_P2)
-        Postura_P3 = self.Comando_EncontraPostura(MinhaEquipe,Centroide_Cor_P3)
+        P1_MyPos = self.Comando_EncontraPostura(MinhaEquipe,Centroide_Cor_P1)
+        # P2_MyPos = self.Comando_EncontraPostura(MinhaEquipe,Centroide_Cor_P2)
+        # P3_MyPos = self.Comando_EncontraPostura(MinhaEquipe,Centroide_Cor_P3)
                 
-        self.Posicao_Oponente_1 = [Oponente[0][0], Oponente[0][1]]
-        self.Posicao_Oponente_2 = [Oponente[1][0], Oponente[1][1]]
-        self.Posicao_Oponente_3 = [Oponente[2][0], Oponente[2][1]]
+        P1_OpPos = [Oponente[0][0], Oponente[0][1]]
+        P2_OpPos = [Oponente[1][0], Oponente[1][1]]
+        P3_OpPos = [Oponente[2][0], Oponente[2][1]]
 
-        self.Cor_Jogador_1 = self.CorCamisa_BGR[0][:3]
-        self.Cor_Jogador_2 = self.CorCamisa_BGR[1][:3]
-        self.Cor_Jogador_3 = self.CorCamisa_BGR[2][:3]
+        self.Cor_Jogador_1 = self.CorCamisa_BGR[0][0:]
+        self.Cor_Jogador_2 = self.CorCamisa_BGR[1][0:]
+        self.Cor_Jogador_3 = self.CorCamisa_BGR[2][0:]
         self.Cor_Oponente = self.Var_CorEquipeAdversaria_BGR
         self.Cor_Bola = (0, 165, 255)
 
-        # if(len(self.Postura_P1) != 0):
-        #     self.Var_ParametrosJogo[0, 0:] = np.array(self.Postura_P1).T
-        #     self.Var_ParametrosJogo[0, 0] = self.Var_ParametrosJogo[0, 0] * -1
-        # if(len(self.Postura_P2) != 0):
-        #     self.Var_ParametrosJogo[1, 0:] = np.array(self.Postura_P2).T
-        #     self.Var_ParametrosJogo[1, 0] = self.Var_ParametrosJogo[1, 0] * -1
-        # if(len(self.Postura_P3) != 0):
-        #     self.Var_ParametrosJogo[2, 0:] = np.array(self.Postura_P3).T
-        #     self.Var_ParametrosJogo[2, 0] = self.Var_ParametrosJogo[2, 0] * -1
-        # if(len(self.Posicao_Oponente_1) != 0):
-        #     self.Var_ParametrosJogo[3, 0:2] = np.array(self.Posicao_Oponente_1).T
-        #     self.Var_ParametrosJogo[3, 0] = self.Var_ParametrosJogo[3, 0] * -1
-        # if(len(self.Posicao_Oponente_2) != 0):
-        #     self.Var_ParametrosJogo[4, 0:2] = np.array(self.Posicao_Oponente_2).T
-        #     self.Var_ParametrosJogo[4, 0] = self.Var_ParametrosJogo[4, 0] * -1
-        # if(len(self.Posicao_Oponente_3) != 0):
-        #     self.Var_ParametrosJogo[5, 0:2] = np.array(self.Posicao_Oponente_3).T
-        #     self.Var_ParametrosJogo[5, 0] = self.Var_ParametrosJogo[5, 0] * -1
-        # if(len(self.Posicao_Bola) != 0):
-        #     self.Var_ParametrosJogo[6, 0:2] = self.Posicao_Bola.T
-        #     self.Var_ParametrosJogo[6, 0] = self.Var_ParametrosJogo[6, 0] * -1
+        if(len(Ball_Pos) != 0): self.Var_ParametrosJogo[0, 0:] = Ball_Pos
+        if(len(P1_MyPos) != 0): self.Var_ParametrosJogo[1, 0:] = P1_MyPos
+        # if(len(P2_MyPos) != 0): self.Var_ParametrosJogo[2, 0:] = P2_MyPos
+        # if(len(P3_OpPos) != 0): self.Var_ParametrosJogo[3, 0:] = P3_MyPos
+        if(len(P1_OpPos) != 0): self.Var_ParametrosJogo[4, 0:2] = P1_OpPos
+        if(len(P2_OpPos) != 0): self.Var_ParametrosJogo[5, 0:2] = P2_OpPos
+        if(len(P3_OpPos) != 0): self.Var_ParametrosJogo[6, 0:2] = P3_OpPos
 
     def Camando_CriaMascara(self,quadro,vetor_limites):
         # Cria a mascara apartir do vetor de limites em HSV
@@ -587,40 +577,18 @@ class JanelaPDI(object):
 
     def Comando_BuscarBola(self, quadro, vetor_limites, AreaMinima=100, AreaMaxima=200):
         # Encontra as posições de todos os objetos da cor pré-determinada na imagem segmentada.
-        Area_Atual = 0
-        Posicao_Bola = np.ones((3, 1))
-        
-        MascaraCor = self.Camando_CriaMascara(quadro,vetor_limites)
-
-        Contornos, _ = cv2.findContours(MascaraCor, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        Tamanho_Contornos = len(Contornos)
-
-        if Tamanho_Contornos > 0:
-            for i in range(Tamanho_Contornos):
-                tupla = Contornos[i]
-                M = cv2.moments(tupla)
-                try:
-                    cx = int(M['m10'] / M['m00'])
-                    cy = int(M['m01'] / M['m00'])
-                    x = np.array([cx, cy])
-                    Area = cv2.contourArea(tupla)
-
-                    if (AreaMinima < Area) and (Area < AreaMaxima) and (Area > Area_Atual):
-                        Posicao_Bola[0][0] = x[0]
-                        Posicao_Bola[1][0] = x[1]
-                        Area_Atual = Area
-                except:
-                    pass
-
-            Posicao_Bola = self.Var_MatrizTransfPerspectiva @ Posicao_Bola
-            return Posicao_Bola[0:2, 0:]
+        Pos_Possivel, Area_Possivel = self.Comando_BuscarPosicaoCor(quadro,vetor_limites,AreaMinima,AreaMaxima)
+        if len(Area_Possivel)>0:
+            Id = np.argmax(Area_Possivel)
+            Posicao_Bola = Pos_Possivel[Id]
         else:
             Posicao_Bola = []
-            return Posicao_Bola
+        return Posicao_Bola
 
     def Comando_BuscarPosicaoCor(self, quadro, vetor_limites, AreaMinima=0, AreaMaxima=500):
         # Encontra as posições de todos os objetos da cor pré-determinada na imagem segmentada.
         PosicaoCor = []
+        AreaCor = []
         PosicaoCorBGR = np.ones((3, 1))
         MascaraCor = self.Camando_CriaMascara(quadro,vetor_limites)
         contornos, _ = cv2.findContours(MascaraCor, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -641,45 +609,22 @@ class JanelaPDI(object):
                         PosicaoCorBGR[1, 0] = x[1]
                         x = self.Var_MatrizTransfPerspectiva @ PosicaoCorBGR
                         PosicaoCor.append(x[:2])
+                        AreaCor.append(Area)
                 except:
                     pass
         else:
             PosicaoCor = []
-        return PosicaoCor
+            AreaCor = []
+        return PosicaoCor,AreaCor
 
     def Comando_BuscarPosicaoCor_Opp(self, quadro, vetor_limites, AreaMinima=0, AreaMaxima=500):
         # Encontra as posições de todos os objetos da cor pré-determinada na imagem segmentada.
-        PosicaoCor_Opp = []
-        PosicaoCorBGR = np.ones((3, 1))
-        MascaraCor = self.Camando_CriaMascara(quadro,vetor_limites)
-        contornos, _ = cv2.findContours(MascaraCor, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        Tamanho_Contornos = len(contornos)
-
+        Pos_Possivel, Area_Possivel = self.Comando_BuscarPosicaoCor(quadro,vetor_limites,AreaMinima,AreaMaxima)
         VectorFinal = []
-
-        if Tamanho_Contornos > 0:
-            VectorArea = []
-            for i in range(Tamanho_Contornos):
-                tupla = contornos[i]
-                M = cv2.moments(tupla)
-                try:
-                    cx = int(M['m10'] / M['m00'])
-                    cy = int(M['m01'] / M['m00'])
-                    x = np.array([cx, cy])
-                    Area = cv2.contourArea(tupla)
-                    if (Area > AreaMinima) and (Area < AreaMaxima):
-                        PosicaoCorBGR[0, 0] = x[0]
-                        PosicaoCorBGR[1, 0] = x[1]
-                        x = self.Var_MatrizTransfPerspectiva @ PosicaoCorBGR
-                        PosicaoCor_Opp.append(x[0:2, 0:])
-                        VectorArea.append(Area)
-                except:
-                    pass
-
-            Vector_Array = np.array(VectorArea)
-            Vector_Index = Vector_Array.argsort()[-3:][::-1]
+        if len(Area_Possivel)>0:
+            Vector_Index = Area_Possivel.argsort()[-3:][::-1]
             for E in Vector_Index:
-                VectorFinal.append(PosicaoCor_Opp[E])
+                VectorFinal.append(Pos_Possivel[E])        
 
         if len(VectorFinal) == 3:
             return VectorFinal
@@ -712,11 +657,7 @@ class JanelaPDI(object):
             object_positions.append(VetorCor2[col])       
         
         num_to_combine = 2 # Número de objetos para combinar
-
-        # Calcula todas as combinações de objetos mais próximos
         closest_combinations = list(itertools.combinations(object_positions, num_to_combine))
-
-        # Ordena as combinações com base na distância entre os objetos
         closest_combinations.sort(key=lambda combo: self.Comando_CalcDistance(combo[0], combo[1]))
 
         # Imprime as combinações mais próximas e seus centros
@@ -743,9 +684,6 @@ class JanelaPDI(object):
             Postura = []
             print(f"X: [], Y: [], Ang(º): []")
         return Postura
-            
-    def Comando_EncerrarPartida(self):
-        self.Var_Jogando = False
     
     # Função para visualizar a câmera em uma thread
     def Comando_VisualizarCamera(self):
