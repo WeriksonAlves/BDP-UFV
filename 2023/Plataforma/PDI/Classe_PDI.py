@@ -49,7 +49,7 @@ class JanelaPDI(object):
         self.Var_TesteMecanico = False
         self.PastaAtual = os.path.dirname(__file__)
         self.ImagemCampo_px = cv2.imread(os.path.join(self.PastaAtual, 'Campo_px.png'))
-        self.Var_ParametrosJogo = np.zeros((7, 3), dtype=np.int64)
+        self.Var_PosPart = np.zeros((3,7), dtype=np.float64)
 
         # Executa as funções de criação dos elementos da janela
         self.Criar_Janela()
@@ -448,8 +448,8 @@ class JanelaPDI(object):
                 self.Var_TesteMecanico = False
 
             # if simulacao == 1:
-            Campo_Virtual = self.Comando_DesenhaTudo(self.PosDesejada_P1, self.Cor_Jogador_1, self.PosDesejada_P2, self.Cor_Jogador_2, self.PosDesejada_P3, self.Cor_Jogador_3,
-                                                    self.Posicao_Oponente_1, self.Posicao_Oponente_2, self.Posicao_Oponente_3, self.Cor_Oponente, 
+            Campo_Virtual = self.Comando_DesenhaTudo(self.PosDesejada_P1, self.Cor_Jog1, self.PosDesejada_P2, self.Cor_Jog2, self.PosDesejada_P3, self.Cor_Jog3,
+                                                    self.Posicao_Oponente_1, self.Posicao_Oponente_2, self.Posicao_Oponente_3, self.Cor_Opo, 
                                                     self.Posicao_Bola, self.Cor_Bola)
 
             cv2.imshow("Visão da Associação", Campo_Virtual)
@@ -457,19 +457,19 @@ class JanelaPDI(object):
             if (cv2.getWindowProperty("Visão da Associação", cv2.WND_PROP_VISIBLE) < 1):
                 break
             # else:
-            self.J1.rBDP_pPos_X[0:, 0] = self.Var_ParametrosJogo[0, 0:]
+            self.J1.rBDP_pPos_X[0:, 0] = self.Var_PosPart[0, 0:]
             self.J1.rBDP_pPos_Xd[0:, 0] = self.PosDesejada_P1[0:,0]
             self.J1.xtil()
             self.J1.autonivel()
             self.J1.baixonivel()
 
-            self.J2.rBDP_pPos_X[0:, 0] = self.Var_ParametrosJogo[1, 0:]
-            self.J2.rBDP_pPos_Xd[0:, 0] = self.Var_ParametrosJogo[6, 0]#self.PosDesejada_P2[0:,0]*-1
+            self.J2.rBDP_pPos_X[0:, 0] = self.Var_PosPart[1, 0:]
+            self.J2.rBDP_pPos_Xd[0:, 0] = self.Var_PosPart[6, 0]#self.PosDesejada_P2[0:,0]*-1
             self.J2.xtil()
             self.J2.autonivel()
             self.J2.baixonivel()
 
-            self.J3.rBDP_pPos_X[0:, 0] = self.Var_ParametrosJogo[2, 0:]
+            self.J3.rBDP_pPos_X[0:, 0] = self.Var_PosPart[2, 0:]
             self.J3.rBDP_pPos_Xd[0:, 0] = self.PosDesejada_P3[0:,0]
             self.J3.xtil()
             self.J3.autonivel()
@@ -490,20 +490,20 @@ class JanelaPDI(object):
             self.InicioCiclo = time.time()
             self.Obter_DadosJogo()
 
-            # self.J1.rBDP_pPos_X[0:, 0] = self.Var_ParametrosJogo[0, 0:]
-            # self.J1.rBDP_pPos_Xd[0:, 0] = self.Var_ParametrosJogo[6, 0:]
+            # self.J1.rBDP_pPos_X[0:, 0] = self.Var_PosPart[0, 0:]
+            # self.J1.rBDP_pPos_Xd[0:, 0] = self.Var_PosPart[6, 0:]
             # self.J1.xtil()
             # self.J1.autonivel()
             # self.J1.baixonivel()
 
-            # self.J2.rBDP_pPos_X[0:, 0] = self.Var_ParametrosJogo[1, 0:]
-            # self.J2.rBDP_pPos_Xd[0:, 0] = self.Var_ParametrosJogo[6, 0:]
+            # self.J2.rBDP_pPos_X[0:, 0] = self.Var_PosPart[1, 0:]
+            # self.J2.rBDP_pPos_Xd[0:, 0] = self.Var_PosPart[6, 0:]
             # self.J2.xtil()
             # self.J2.autonivel()
             # self.J2.baixonivel()
 
-            # self.J3.rBDP_pPos_X[0:, 0] = self.Var_ParametrosJogo[2, 0:]
-            # self.J3.rBDP_pPos_Xd[0:, 0] = self.Var_ParametrosJogo[6, 0:]
+            # self.J3.rBDP_pPos_X[0:, 0] = self.Var_PosPart[2, 0:]
+            # self.J3.rBDP_pPos_Xd[0:, 0] = self.Var_PosPart[6, 0:]
             # self.J3.xtil()
             # self.J3.autonivel()
             # self.J3.baixonivel()
@@ -522,11 +522,11 @@ class JanelaPDI(object):
 
         # Posição da bola em pixels
         Ball_Pos = self.Comando_BuscarBola(frames, self.Var_MatrizCor[1][0:],100,200)        
-        Ball_Pos = self.Comando_BuscarPosicaoCor(frames,self.Var_MatrizCor[1][0:],100,200)
+        # Ball_Pos = self.Comando_BuscarPosicaoCor(frames,self.Var_MatrizCor[1][0:],100,200)
 
         # Posição das cores da minha equipe e do oponente
-        MinhaEquipe,_ = self.Comando_BuscarPosicaoCor(frames, self.Var_MatrizCor[self.Var_CorMinhaEquipe][0:],150,300)
-        Oponente = self.Comando_BuscarPosicaoCor_Opp(frames, self.Var_MatrizCor[self.Var_CorEquipeAdversaria][0:],150,300)
+        MinhaEquipe,_ = self.Comando_BuscarPosicaoCor(frames, self.Var_MatrizCor[self.Var_CorMinhaEquipe][0:],100,300)
+        OpPos = self.Comando_BuscarPosicaoCor_Opp(frames, self.Var_MatrizCor[self.Var_CorEquipeAdversaria][0:],125,300)
 
         # Posição das cores dos meus jogadores
         P1_Centroide_Cor_1,_ = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[0][:6],50,150)
@@ -538,32 +538,28 @@ class JanelaPDI(object):
         P3_Centroide_Cor_2,_ = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[2][6:],50,150)
 
         # Posição do centroide de identificação de cada jogador
-        Centroide_Cor_P1,_ = self.Comando_AssociarCores(P1_Centroide_Cor_1,P1_Centroide_Cor_2,80)
-        # Centroide_Cor_P2,_ = self.Comando_AssociarCores(P2_Centroide_Cor_1,P2_Centroide_Cor_2)
-        # Centroide_Cor_P3,_ = self.Comando_AssociarCores(P3_Centroide_Cor_1,P3_Centroide_Cor_2)
+        Centroide_Cor_P1,_ = self.Comando_AssociarCores(P1_Centroide_Cor_1,P1_Centroide_Cor_2,50)
+        Centroide_Cor_P2,_ = self.Comando_AssociarCores(P2_Centroide_Cor_1,P2_Centroide_Cor_2)
+        Centroide_Cor_P3,_ = self.Comando_AssociarCores(P3_Centroide_Cor_1,P3_Centroide_Cor_2)
 
         # Postura do robo
         P1_MyPos = self.Comando_EncontraPostura(MinhaEquipe,Centroide_Cor_P1)
-        # P2_MyPos = self.Comando_EncontraPostura(MinhaEquipe,Centroide_Cor_P2)
-        # P3_MyPos = self.Comando_EncontraPostura(MinhaEquipe,Centroide_Cor_P3)
-                
-        P1_OpPos = [Oponente[0][0], Oponente[0][1]]
-        P2_OpPos = [Oponente[1][0], Oponente[1][1]]
-        P3_OpPos = [Oponente[2][0], Oponente[2][1]]
+        P2_MyPos = self.Comando_EncontraPostura(MinhaEquipe,Centroide_Cor_P2)
+        P3_MyPos = self.Comando_EncontraPostura(MinhaEquipe,Centroide_Cor_P3)
 
-        self.Cor_Jogador_1 = self.CorCamisa_BGR[0][0:]
-        self.Cor_Jogador_2 = self.CorCamisa_BGR[1][0:]
-        self.Cor_Jogador_3 = self.CorCamisa_BGR[2][0:]
-        self.Cor_Oponente = self.Var_CorEquipeAdversaria_BGR
+        self.Cor_Jog1 = self.CorCamisa_BGR[0][0:]
+        self.Cor_Jog2 = self.CorCamisa_BGR[1][0:]
+        self.Cor_Jog3 = self.CorCamisa_BGR[2][0:]
+        self.Cor_Opo = self.Var_CorEquipeAdversaria_BGR
         self.Cor_Bola = (0, 165, 255)
 
-        if(len(Ball_Pos) != 0): self.Var_ParametrosJogo[0, 0:] = Ball_Pos
-        if(len(P1_MyPos) != 0): self.Var_ParametrosJogo[1, 0:] = P1_MyPos
-        # if(len(P2_MyPos) != 0): self.Var_ParametrosJogo[2, 0:] = P2_MyPos
-        # if(len(P3_OpPos) != 0): self.Var_ParametrosJogo[3, 0:] = P3_MyPos
-        if(len(P1_OpPos) != 0): self.Var_ParametrosJogo[4, 0:2] = P1_OpPos
-        if(len(P2_OpPos) != 0): self.Var_ParametrosJogo[5, 0:2] = P2_OpPos
-        if(len(P3_OpPos) != 0): self.Var_ParametrosJogo[6, 0:2] = P3_OpPos
+        if(len(Ball_Pos) != 0): self.Var_PosPart[0:,0] = Ball_Pos[0:,0]
+        if(len(P1_MyPos) != 0): self.Var_PosPart[0:,1] = P1_MyPos[0:,0]
+        if(len(P2_MyPos) != 0): self.Var_PosPart[0:,2] = P2_MyPos[0:,0]
+        if(len(P3_MyPos) != 0): self.Var_PosPart[0:,3] = P3_MyPos[0:,0]
+        if(len(OpPos) != 0): self.Var_PosPart[0:,4] = OpPos[0][0:,0]
+        if(len(OpPos) != 0): self.Var_PosPart[0:,5] = OpPos[1][0:,0]
+        if(len(OpPos) != 0): self.Var_PosPart[0:,6] = OpPos[2][0:,0]
 
     def Camando_CriaMascara(self,quadro,vetor_limites):
         # Cria a mascara apartir do vetor de limites em HSV
@@ -577,12 +573,12 @@ class JanelaPDI(object):
 
     def Comando_BuscarBola(self, quadro, vetor_limites, AreaMinima=100, AreaMaxima=200):
         # Encontra as posições de todos os objetos da cor pré-determinada na imagem segmentada.
+        Posicao_Bola = np.array([[0], [685], [0]])
         Pos_Possivel, Area_Possivel = self.Comando_BuscarPosicaoCor(quadro,vetor_limites,AreaMinima,AreaMaxima)
         if len(Area_Possivel)>0:
             Id = np.argmax(Area_Possivel)
-            Posicao_Bola = Pos_Possivel[Id]
-        else:
-            Posicao_Bola = []
+            Posicao_Bola = np.concatenate((Pos_Possivel[Id], [[0]]), axis=0)
+        
         return Posicao_Bola
 
     def Comando_BuscarPosicaoCor(self, quadro, vetor_limites, AreaMinima=0, AreaMaxima=500):
@@ -621,24 +617,25 @@ class JanelaPDI(object):
         # Encontra as posições de todos os objetos da cor pré-determinada na imagem segmentada.
         Pos_Possivel, Area_Possivel = self.Comando_BuscarPosicaoCor(quadro,vetor_limites,AreaMinima,AreaMaxima)
         VectorFinal = []
-        if len(Area_Possivel)>0:
+        Area_Possivel = np.array(Area_Possivel)
+        if len(Area_Possivel) > 0:
             Vector_Index = Area_Possivel.argsort()[-3:][::-1]
             for E in Vector_Index:
-                VectorFinal.append(Pos_Possivel[E])        
+                VectorFinal.append(np.concatenate((Pos_Possivel[E], [[0]]), axis=0))        
 
         if len(VectorFinal) == 3:
             return VectorFinal
         elif len(VectorFinal) == 2:
-            VectorFinal.append(np.array([250, 685]))
+            VectorFinal.append(np.array([[250], [685], [0]]))
             return VectorFinal
         elif len(VectorFinal) == 1:
-            VectorFinal.append(np.array([230, 685]))
-            VectorFinal.append(np.array([250, 685]))
+            VectorFinal.append(np.array([[230], [685], [0]]))
+            VectorFinal.append(np.array([[250], [685], [0]]))
             return VectorFinal
         elif len(VectorFinal) == 0:
-            VectorFinal.append(np.array([200, 685]))
-            VectorFinal.append(np.array([250, 685]))
-            VectorFinal.append(np.array([300, 685]))
+            VectorFinal.append(np.array([[200], [685], [0]]))
+            VectorFinal.append(np.array([[250], [685], [0]]))
+            VectorFinal.append(np.array([[300], [685], [0]]))
             return VectorFinal
 
     def Comando_CalcDistance(self,point1, point2):
@@ -671,18 +668,15 @@ class JanelaPDI(object):
         return Centroide_Cor, Dados
 
     def Comando_EncontraPostura(self,VetorCorTime,Centroide_Cor):
-        NumCorTime = np.shape(VetorCorTime)[0]  # Número de jogadores
-        NumCorJog = np.shape(Centroide_Cor)[0]  # Número de camisetas
-        try:# (NumCorTime > 0) and (NumCorJog > 0):
+        try:
             # Encontra o angulo entre a cor do time e o centroide da cores do respectivo jogador        
             Pos, Dados = self.Comando_AssociarCores(VetorCorTime,Centroide_Cor)
             vetor_dif = Dados[0][:,1] - Dados[0][:,0] # Vetor que aponta do centroide das cores do jogador 1 para a cor do time
             angulo_rad = np.arctan2(vetor_dif[1], vetor_dif[0]) # Calcula o ângulo entre o vetor e o eixo X da imagem (em radianos)
             Postura = np.array([[Pos[0][0][0]],[Pos[0][1][0]],[angulo_rad]])
-            print(f"X: {Postura[0]}, Y:{Postura[1]}, Ang(º):{np.degrees(angulo_rad)}")
-        except:#else:
+            print("X: %4d, Y: %4d, Angº: %3.2f" %(Postura[0],Postura[1],np.rad2deg(Postura[2])))
+        except:
             Postura = []
-            print(f"X: [], Y: [], Ang(º): []")
         return Postura
     
     # Função para visualizar a câmera em uma thread
@@ -692,7 +686,7 @@ class JanelaPDI(object):
             Quadros = cv2.resize(cv2.medianBlur(Quadros, self.Var_MedianBlur), [640, 480]) # Aplica um filtro de mediana
 
             cv2.imshow("Visao Camera", Quadros)
-            tecla = cv2.waitKey(self.Var_FPS)
+            cv2.waitKey(self.Var_FPS)
             if (cv2.getWindowProperty("Visao Camera", cv2.WND_PROP_VISIBLE) < 1):
                 break
 
@@ -703,154 +697,64 @@ class JanelaPDI(object):
             Quadros = cv2.resize(cv2.medianBlur(Quadros, self.Var_MedianBlur), [640, 480]) # Aplica um filtro de mediana
 
             # Inicializar uma máscara vazia
-            MascaraTotal = np.zeros(Quadros.shape[:2], dtype=np.uint8)
-            CorHSV = cv2.cvtColor(Quadros, cv2.COLOR_BGR2HSV)
+            # CorHSV = cv2.cvtColor(Quadros, cv2.COLOR_BGR2HSV)
             MatrizCores = [None] * 7
 
             # Aplicar o filtro de cor para cada cor calibrada e realizar a combinação lógica "OR"
             for Id, Dados in enumerate(self.Var_MatrizCor):
-                LimiteCorInferior = np.array([Dados[0], Dados[2], Dados[4]])
-                LimiteCorSuperior = np.array([Dados[1], Dados[3], Dados[5]])
-                MascaraCor = cv2.inRange(CorHSV, LimiteCorInferior, LimiteCorSuperior)
-                MascaraCor = cv2.dilate(MascaraCor, self.Var_Kernel, iterations=1)
-                MascaraCor = cv2.medianBlur(MascaraCor, self.Var_MedianBlur+4)              
+                MascaraCor = self.Camando_CriaMascara(Quadros,Dados)            
                 MatrizCores[Id] = cv2.bitwise_and(Quadros, Quadros, mask=MascaraCor)
-
             AplicacaoCor = MatrizCores[0]
             for i in range(1, 7):
-                AplicacaoCor = cv2.bitwise_or(AplicacaoCor, MatrizCores[i])
-
-            ConversaoRGB = cv2.cvtColor(AplicacaoCor, cv2.COLOR_BGR2RGB)
-            
-            cv2.imshow("Visao Segmentacao", ConversaoRGB)
-            tecla = cv2.waitKey(self.Var_FPS)
+                AplicacaoCor = cv2.bitwise_or(AplicacaoCor, MatrizCores[i])            
+            cv2.imshow("Visao Segmentacao", AplicacaoCor)
+            cv2.waitKey(self.Var_FPS)
             if (cv2.getWindowProperty("Visao Segmentacao", cv2.WND_PROP_VISIBLE) < 1):
                 break
     
     def Comando_VisualizarAssociacao(self):
         while True:
-            Campo_Virtual = self.Comando_DesenhaTudo(self.Postura_P1, self.Cor_Jogador_1, self.Postura_P2, self.Cor_Jogador_2, self.Postura_P3, self.Cor_Jogador_3,
-                                                    self.Posicao_Oponente_1, self.Posicao_Oponente_2, self.Posicao_Oponente_3, self.Cor_Oponente, 
-                                                    self.Posicao_Bola, self.Cor_Bola)
+            Campo_Virtual = self.Comando_DesenhaTudo(self.Var_PosPart[0:,1],self.Var_PosPart[0:,2],self.Var_PosPart[0:,3],
+                                                     self.CorCamisa_BGR[0],self.CorCamisa_BGR[1],self.CorCamisa_BGR[2],
+                                                     self.Var_PosPart[0:,4], self.Var_PosPart[0:,5], self.Var_PosPart[0:,6],
+                                                     self.Cor_Opo, self.Var_PosPart[0:,0], self.Cor_Bola)
 
             cv2.imshow("Visao Associacao", Campo_Virtual)
             cv2.waitKey(self.Var_FPS) # Está em 25 milisegundos = 40 fps
             if (cv2.getWindowProperty("Visao Associacao", cv2.WND_PROP_VISIBLE) < 1):
                 break
-        # while True:
-        #     elementos = [
-        #         {"tipo": "seta", "X": self.Postura_P1[0], "Y": self.Postura_P1[1], "cor": self.Cor_Jogador_1, "orientacao": self.Postura_P1[2]},
-        #         {"tipo": "seta", "X": self.Postura_P2[0], "Y": self.Postura_P2[1], "cor": self.Cor_Jogador_2, "orientacao": self.Postura_P2[2]},
-        #         {"tipo": "seta", "X": self.Postura_P3[0], "Y": self.Postura_P3[1], "cor": self.Cor_Jogador_3, "orientacao": self.Postura_P3[2]},
-        #         {"tipo": "circulo", "X": self.Posicao_Oponente_1[0], "Y": self.Posicao_Oponente_1[1], "cor": self.Cor_Oponente},
-        #         {"tipo": "circulo", "X": self.Posicao_Oponente_2[0], "Y": self.Posicao_Oponente_2[1], "cor": self.Cor_Oponente},
-        #         {"tipo": "circulo", "X": self.Posicao_Oponente_3[0], "Y": self.Posicao_Oponente_3[1], "cor": self.Cor_Oponente},
-        #         {"tipo": "bola", "X": self.Posicao_Bola[0], "Y": self.Posicao_Bola[1], "cor": self.Cor_Bola},
-        #     ]
 
-        #     Campo_Virtual = self.Comando_DesenhaTudo(elementos)
-
-        #     cv2.imshow("Visao Associacao", Campo_Virtual)
-        #     cv2.waitKey(self.Var_FPS) # Está em 25 milisegundos = 40 fps
-        #     if (cv2.getWindowProperty("Visao Associacao", cv2.WND_PROP_VISIBLE) < 1):
-        #         break
-
-    
-    # # Função genérica para desenhar setas, círculos e bolas
-    # def Comando_DesenhaElemento(self, Campo_Virtual, tipo, X, Y, **kwargs):
-    #     X = X + 900
-    #     Y = Y + 750
-    #     coordenadas_centro = (int(X), int(Y))
-    #     espessura = 10        
-    #     if tipo == "seta":
-    #         orientacao = kwargs.get("orientacao", 0)
-    #         comprimento = kwargs.get("comprimento", 60)
-    #         end_point = (int(X + comprimento * np.cos(-orientacao)), int(Y + comprimento * np.sin(-orientacao)))
-    #         cv2.arrowedLine(Campo_Virtual, coordenadas_centro, end_point, kwargs.get("cor", (0, 255, 0)), espessura, cv2.LINE_AA, tipLength=0.2)
-    #     elif tipo == "circulo":
-    #         raio = kwargs.get("raio", 20)
-    #         cv2.circle(Campo_Virtual, coordenadas_centro, raio, kwargs.get("cor", (255, 255, 0)), espessura, cv2.LINE_AA)
-    #     elif tipo == "bola":
-    #         raio = kwargs.get("raio", 15)
-    #         cv2.circle(Campo_Virtual, coordenadas_centro, raio, kwargs.get("cor", (0, 255, 255)), espessura, cv2.LINE_AA)
-
-    # # Função para desenhar robôs do time e robôs adversários
-    # def Comando_DesenhaTudo(self, elementos):
-    #     Campo_Virtual = self.ImagemCampo_px.copy()
-        
-    #     for elemento in elementos:
-    #         tipo = elemento.get("tipo", None)
-    #         if tipo:
-    #             X = elemento.get("X", 0)
-    #             Y = elemento.get("Y", 0)
-    #             cor = elemento.get("cor", None)
-    #             if cor is None:
-    #                 raise ValueError(f"Cor não especificada para o elemento {tipo}.")
-                
-    #             if tipo == "seta":
-    #                 orientacao = elemento.get("orientacao", 0)
-    #                 comprimento = elemento.get("comprimento", 60)
-    #                 self.Comando_DesenhaElemento(Campo_Virtual, "seta", X, Y, orientacao=orientacao, comprimento=comprimento, cor=cor)
-    #             elif tipo == "circulo":
-    #                 raio = elemento.get("raio", 20)
-    #                 self.Comando_DesenhaElemento(Campo_Virtual, "circulo", X, Y, raio=raio, cor=cor)
-    #             elif tipo == "bola":
-    #                 raio = elemento.get("raio", 15)
-    #                 self.Comando_DesenhaElemento(Campo_Virtual, "bola", X, Y, raio=raio, cor=cor)
-    #             else:
-    #                 raise ValueError(f"Tipo de elemento não reconhecido: {tipo}")
-        
-    #     Campo_Virtual = cv2.resize(Campo_Virtual, (384, 288))
-    #     return Campo_Virtual
-
-
-    def Comando_DesenhaSeta(self, Campo_Virtual, X, Y, Orientacao, Cor=(0, 255, 0), Comprimento=60):
-        X = X + 900
-        Y = Y + 750
-        end_point = (int(X + Comprimento * np.cos(-Orientacao)), int(Y + Comprimento * np.sin(-Orientacao)))
-        start_point = (int(X), int(Y))
-        espessura = 10
-        cv2.arrowedLine(Campo_Virtual, start_point, end_point, Cor, espessura, cv2.LINE_AA, tipLength=0.2)
-
-    # Função para desenhar oponentes como círculos
-    def Comando_DesenhaCirculoOponente(self, Campo_Virtual, X, Y, Cor=(255, 255, 0), Raio=20):
-        X = X + 900
-        Y = Y + 750
-        coordenadas_centro = (int(X), int(Y))
-        espessura = 10
-        cv2.circle(Campo_Virtual, coordenadas_centro, Raio, Cor, espessura, cv2.LINE_AA)
-
-    # Função para desenhar a bola
-    def Comando_DesenhaBola(self, Campo_Virtual, X, Y, Cor=(0, 255, 255), Raio=15):
-        X = X + 900
-        Y = Y + 750
-        coordenadas_centro = (int(X), int(Y))
-        espessura = 20
-        cv2.circle(Campo_Virtual, coordenadas_centro, Raio, Cor, espessura, cv2.LINE_AA)
-    
     # Função para desenhar robôs do time e robôs adversários
-    def Comando_DesenhaTudo(self, Posicao_Jogador_1, Cor_1, Posicao_Jogador_2, Cor_2, Posicao_Jogador_3, Cor_3, 
-                                Posicao_Adversario_1, Posicao_Adversario_2, Posicao_Adversario_3, Cor_Adversario, 
-                                Posicao_Bola, Cor_Bola):    
+    def Comando_DesenhaTudo(self, P1_Pos, P2_Pos, P3_Pos, P1_Cor, P2_Cor, P3_Cor, Op1_Pos, Op2_Pos, Op3_Pos, Op_Cor, Ball_Pos, Ball_Cor):
         Campo_Virtual = self.ImagemCampo_px.copy()
-        
-        if len(Posicao_Jogador_1) == 3:
-            self.Comando_DesenhaSeta(Campo_Virtual, Posicao_Jogador_1[0], Posicao_Jogador_1[1], Posicao_Jogador_1[2], Cor_1)
-        if len(Posicao_Jogador_2) == 3:
-            self.Comando_DesenhaSeta(Campo_Virtual, Posicao_Jogador_2[0], Posicao_Jogador_2[1], Posicao_Jogador_2[2], Cor_2)
-        if len(Posicao_Jogador_3) == 3:
-            self.Comando_DesenhaSeta(Campo_Virtual, Posicao_Jogador_3[0], Posicao_Jogador_3[1], Posicao_Jogador_3[2], Cor_3)
-        if len(Posicao_Adversario_1) == 2:
-            self.Comando_DesenhaCirculoOponente(Campo_Virtual, Posicao_Adversario_1[0], Posicao_Adversario_1[1], Cor_Adversario)
-        if len(Posicao_Adversario_2) == 2:
-            self.Comando_DesenhaCirculoOponente(Campo_Virtual, Posicao_Adversario_2[0], Posicao_Adversario_2[1], Cor_Adversario)
-        if len(Posicao_Adversario_3) == 2:
-            self.Comando_DesenhaCirculoOponente(Campo_Virtual, Posicao_Adversario_3[0], Posicao_Adversario_3[1], Cor_Adversario)
-        if len(Posicao_Bola) == 2:
-            self.Comando_DesenhaBola(Campo_Virtual, Posicao_Bola[0], Posicao_Bola[1], Cor_Bola)
-        Campo_Virtual = cv2.resize(Campo_Virtual, (384, 288))
+        self.Comando_DesenhaSeta(Campo_Virtual, P1_Pos, P1_Cor[:3],P1_Cor[3:])
+        self.Comando_DesenhaSeta(Campo_Virtual, P2_Pos, P2_Cor[:3],P2_Cor[3:])
+        self.Comando_DesenhaSeta(Campo_Virtual, P3_Pos, P3_Cor[:3],P3_Cor[3:])
+        self.Comando_DesenhaCirculo(Campo_Virtual, Op1_Pos, Op_Cor)
+        self.Comando_DesenhaCirculo(Campo_Virtual, Op2_Pos, Op_Cor)
+        self.Comando_DesenhaCirculo(Campo_Virtual, Op3_Pos, Op_Cor)
+        self.Comando_DesenhaBola(Campo_Virtual, Ball_Pos, Ball_Cor)
+
+        Campo_Virtual = cv2.resize(Campo_Virtual, [640, 480])
         return Campo_Virtual
 
+    def Comando_DesenhaSeta(self, Campo_Virtual, Posicao, Cor1, Cor2, Comprimento = 80, espessura = 10,raio=40):
+        X, Y, Orientacao_Radianos = Posicao[0], Posicao[1], Posicao[2]
+        X = int(X + 900)
+        Y = int(Y + 750)
+        end_point = (int(X + Comprimento * np.cos(Orientacao_Radianos)), int(Y + Comprimento * np.sin(Orientacao_Radianos)))
+        start_point = (int(X), int(Y))
+        cv2.arrowedLine(Campo_Virtual, start_point, end_point, Cor1, espessura, cv2.LINE_AA, tipLength=0.2)
+        cv2.circle(Campo_Virtual, (X, Y), raio, Cor2,espessura)  # O valor -1 preenche o círculo
+
+    def Comando_DesenhaCirculo(self, Campo_Virtual, Posicao, Cor,espessura = 10, raio = 40):
+        X, Y = int(Posicao[0] + 900), int(Posicao[1] + 750)        
+        cv2.circle(Campo_Virtual, (X, Y), raio, Cor, espessura)  # O valor -1 preenche o círculo
+
+    def Comando_DesenhaBola(self, Campo_Virtual, Posicao, Cor, raio = 21):
+        X, Y = int(Posicao[0] + 900), int(Posicao[1] + 750)        
+        cv2.circle(Campo_Virtual, (X, Y), raio, Cor, -1)  # O valor -1 preenche o círculo
+    
     def Acao_Jogo(self):
         print('1: ', self.J1.rBDP_pSC_PWM[0], self.J1.rBDP_pSC_PWM[1], '2: ', self.J2.rBDP_pSC_PWM[0], self.J2.rBDP_pSC_PWM[1], '3: ', self.J3.rBDP_pSC_PWM[0], self.J3.rBDP_pSC_PWM[1])
         
