@@ -9,11 +9,13 @@ Scrip destinado para funções realcionada a calibragem do campo.
 # Importando bibliotecas necessárias
 from tkinter import *
 from math import dist
-from tkinter import ttk
+from tkinter import ttk,messagebox
 
-
+from referee.referee_class import*
 from Controle.Class_Control import*
+# from Controle.Classe_Joystick import*
 
+import pygame as pg
 import cv2
 import threading
 import numpy as np
@@ -45,46 +47,57 @@ class JanelaPDI(object):
         self.Var_MatrizTransfPerspectiva = MatrizTransfPerspectiva
 
         self.Var_Comunicacao = False
-        # self.Var_Jogar = False
+        self.Var_Jogando = False
         self.Var_TesteMecanico = False
+        self.Var_Joystick = False
         self.PastaAtual = os.path.dirname(__file__)
         self.ImagemCampo_px = cv2.imread(os.path.join(self.PastaAtual, 'Campo_px.png'))
         self.Var_PosPart = np.zeros((3,7), dtype=np.float64)
-
+        
+        self.juiz = referee_class(HOST='192.168.0.159')
+        threading.Thread(target=self.juiz.message).start()
+        
         # Executa as funções de criação dos elementos da janela
         self.Criar_Janela()
         self.Criar_TextoInformacoes()
         self.Criar_CheckButton()
         self.Criar_ComboBox()
         self.Criar_Botoes()
+        # threading.Thread(target=self.Comando_Main).start()
     
     # Cria e configura a sub janela
     def Criar_Janela(self):
         self.Janela = Toplevel()
         self.Janela.title("Tela de Jogo")
-        self.Janela.minsize(830, 600)
-        self.Janela.maxsize(830, 600)
+        self.Janela.minsize(830, 700)
+        self.Janela.maxsize(830, 700)
         self.Janela.configure(bg='#229A00')
 
         self.BarraDeStatus = Label(self.Janela,
                                 text="Instruções: \nConfigurar os jogadores \nIniciar comunicação \nIniciar partida",
                                 bd=1, relief=SUNKEN, anchor=CENTER)
         self.BarraDeStatus.pack(side=BOTTOM, fill=X)
+       
 
     def Limpar_BarraDeStatus(self):
         """
         Limpa o texto exibido na barra de status.
         """
-        self.BarraDeStatus.config(text="")
-        self.BarraDeStatus.update_idletasks()
+        try:
+            self.BarraDeStatus.config(text="")
+            self.BarraDeStatus.update_idletasks()
+        except:
+            pass
 
     def Atualizar_BarrraDeStatus(self, texto):
         """
         Atualiza o texto exibido na barra de status.
         :param texto: O novo texto a ser exibido na barra de status.
         """
-        self.BarraDeStatus.config(text=texto)
-        self.BarraDeStatus.update_idletasks()
+        try:
+            self.BarraDeStatus.config(text=texto)
+            self.BarraDeStatus.update_idletasks()
+        except: pass
 
     # Cria os textos informativos da janela
     def Criar_TextoInformacoes(self):
@@ -221,23 +234,29 @@ class JanelaPDI(object):
         But_IniciarComunicacao = Button(self.Janela, text="Abrir/Fechar \nComunicação", command=self.Comando_IniciarComunicacao)
         But_IniciarComunicacao.place(height=50, width=200, x=50, y=130)
 
-        But_TesteMecanico = Button(self.Janela, text="Teste Mecânico", command=lambda: threading.Thread(target=self.Comando_TesteMecanico).start())
-        But_TesteMecanico.place(height=50, width=200, x=50, y=190)
+        But_Joystick = Button(self.Janela, text="Ativar Sistema", command=lambda: threading.Thread(target=self.Comando_Main).start())
+        But_Joystick.place(height=50, width=200, x=50, y=190)
 
-        But_IniciarPartida = Button(self.Janela, text="Iniciar Partida", command=lambda: threading.Thread(target=self.Comando_IniciarPartida).start())
+        But_IniciarPartida = Button(self.Janela, text="Iniciar Partida", command=self.Comando_IniciarPartida)
         But_IniciarPartida.place(height=50, width=200, x=50, y=250)
 
         But_PararPartida = Button(self.Janela, text="Parar Partida", command=self.Comando_EncerrarPartida)
         But_PararPartida.place(height=50, width=200, x=50, y=310)
 
+        But_TesteMecanico = Button(self.Janela, text="Teste Mecânico", command=lambda: threading.Thread(target=self.Comando_TesteMecanico).start())
+        But_TesteMecanico.place(height=50, width=200, x=50, y=370)
+
+        But_Sistema = Button(self.Janela, text="Ativar joystick", command=lambda: threading.Thread(target=self.Comando_joystick).start())
+        But_Sistema.place(height=50, width=200, x=50, y=430)
+
         But_VisualizarCamera = Button(self.Janela, text="Ver Câmera", command=lambda: threading.Thread(target=self.Comando_VisualizarCamera).start())
-        But_VisualizarCamera.place(height=50, width=200, x=50, y=370)
+        But_VisualizarCamera.place(height=50, width=200, x=50, y=490)
 
         But_VisualizarSegmentacao = Button(self.Janela, text="Ver Segmentação", command=lambda: threading.Thread(target=self.Comando_VisualizarSegmentacao).start())
-        But_VisualizarSegmentacao.place(height=50, width=200, x=50, y=430)
+        But_VisualizarSegmentacao.place(height=50, width=200, x=50, y=550)
 
         But_VisualizarAssociacao = Button(self.Janela, text="Ver Associação", command=lambda: threading.Thread(target=self.Comando_VisualizarAssociacao).start())
-        But_VisualizarAssociacao.place(height=50, width=200, x=50, y=490)
+        But_VisualizarAssociacao.place(height=50, width=200, x=50, y=610)
 
     def Comando_SalvarConfiguracao(self):
         # Cria a matriz de configurações de jogo
@@ -413,7 +432,7 @@ class JanelaPDI(object):
         Ry: Raio em y
         w: Período da elipse
         '''
-
+        
         self.Limpar_BarraDeStatus()
         self.Atualizar_BarrraDeStatus("Teste mecânico iniciado")
 
@@ -480,41 +499,56 @@ class JanelaPDI(object):
         self.Limpar_BarraDeStatus()
         self.Atualizar_BarrraDeStatus('Partida Encerrada')
     
+    def Comando_Main(self):
+        self.Limpar_BarraDeStatus()
+        self.Atualizar_BarrraDeStatus("Partida Iniciada")
+        
+        while True:            
+            if self.Var_Jogando or self.juiz.play:
+                self.Var_Joystick = False
+                self.InicioCiclo = time.time()
+
+                self.Obter_DadosJogo()
+
+                self.J1.rBDP_pPos_X[0:, 0] = self.Var_PosPart[0:, 1]
+                self.J2.rBDP_pPos_X[0:, 0] = self.Var_PosPart[0:, 2]
+                self.J3.rBDP_pPos_X[0:, 0] = self.Var_PosPart[0:, 3]
+
+                # self.J1.rBDP_pPos_Xd[0:, 0] = self.Var_PosPart[0:, 1]
+                # self.J2.rBDP_pPos_Xd[0:, 0] = self.Var_PosPart[0:, 2]
+                # self.J3.rBDP_pPos_Xd[0:, 0] = self.Var_PosPart[0:, 3]
+                
+                self.Comando_OuvirJuiz()
+                
+                # self.J1.xtil()
+                # self.J1.autonivel()
+                # self.J1.baixonivel()
+
+                # self.J2.xtil()
+                # self.J2.autonivel()
+                # self.J2.baixonivel()
+
+                # self.J3.xtil()
+                # self.J3.autonivel()
+                # self.J3.baixonivel()
+
+                self.Acao_Jogo()
+
+                # self.Limpar_BarraDeStatus()
+                # self.Atualizar_BarrraDeStatus("Partida Iniciada")
+            else: 
+                print('Sai')
+                break
+
     # Obtem os dados dos jogadores e envia o comando
     def Comando_IniciarPartida(self):
         self.Var_Jogando = True
-        self.Limpar_BarraDeStatus()
-        self.Atualizar_BarrraDeStatus("Partida Iniciada")
-        self.Obter_DadosJogo()
-        while self.Var_Jogando == True:
-            self.InicioCiclo = time.time()
-            self.Obter_DadosJogo()
 
-            # self.J1.rBDP_pPos_X[0:, 0] = self.Var_PosPart[0, 0:]
-            # self.J1.rBDP_pPos_Xd[0:, 0] = self.Var_PosPart[6, 0:]
-            # self.J1.xtil()
-            # self.J1.autonivel()
-            # self.J1.baixonivel()
-
-            # self.J2.rBDP_pPos_X[0:, 0] = self.Var_PosPart[1, 0:]
-            # self.J2.rBDP_pPos_Xd[0:, 0] = self.Var_PosPart[6, 0:]
-            # self.J2.xtil()
-            # self.J2.autonivel()
-            # self.J2.baixonivel()
-
-            # self.J3.rBDP_pPos_X[0:, 0] = self.Var_PosPart[2, 0:]
-            # self.J3.rBDP_pPos_Xd[0:, 0] = self.Var_PosPart[6, 0:]
-            # self.J3.xtil()
-            # self.J3.autonivel()
-            # self.J3.baixonivel()
-
-            # self.Acao_Jogo()
-
-        self.Limpar_BarraDeStatus()
-        self.Atualizar_BarrraDeStatus('Partida Encerrada')
-    
     def Comando_EncerrarPartida(self):
         self.Var_Jogando = False
+        self.Var_Joystick = False
+        self.Limpar_BarraDeStatus()
+        self.Atualizar_BarrraDeStatus("Partida Parada")
     
     def Obter_DadosJogo(self):
         _, frames = self.Var_InformacoesCamera.read()
@@ -674,7 +708,7 @@ class JanelaPDI(object):
             vetor_dif = Dados[0][:,1] - Dados[0][:,0] # Vetor que aponta do centroide das cores do jogador 1 para a cor do time
             angulo_rad = np.arctan2(vetor_dif[1], vetor_dif[0]) # Calcula o ângulo entre o vetor e o eixo X da imagem (em radianos)
             Postura = np.array([[Pos[0][0][0]],[Pos[0][1][0]],[angulo_rad]])
-            print("X: %4d, Y: %4d, Angº: %3.2f" %(Postura[0],Postura[1],np.rad2deg(Postura[2])))
+            # print("X: %4d, Y: %4d, Angº: %3.2f" %(Postura[0],Postura[1],np.rad2deg(Postura[2])))
         except:
             Postura = []
         return Postura
@@ -756,10 +790,11 @@ class JanelaPDI(object):
         cv2.circle(Campo_Virtual, (X, Y), raio, Cor, -1)  # O valor -1 preenche o círculo
     
     def Acao_Jogo(self):
-        print('1: ', self.J1.rBDP_pSC_PWM[0], self.J1.rBDP_pSC_PWM[1], '2: ', self.J2.rBDP_pSC_PWM[0], self.J2.rBDP_pSC_PWM[1], '3: ', self.J3.rBDP_pSC_PWM[0], self.J3.rBDP_pSC_PWM[1])
-        
-        try:
-            self.pEsp.write([1, 2, int(self.J1.rBDP_pSC_PWM[0, 0]), int(self.J1.rBDP_pSC_PWM[1, 0]), int(self.J2.rBDP_pSC_PWM[0, 0]), int(self.J2.rBDP_pSC_PWM[1, 0]), int(self.J3.rBDP_pSC_PWM[0, 0]), int(self.J3.rBDP_pSC_PWM[1, 0]), 3, 10])
+        # print(f"1: {self.J1.rBDP_pSC_W[0]}, {self.J1.rBDP_pSC_W[1]}, 2: {self.J2.rBDP_pSC_W[0]}, {self.J2.rBDP_pSC_W[1]}, 3: {self.J3.rBDP_pSC_W[0]}, {self.J3.rBDP_pSC_W[1]}")
+        String_RPM = str(self.J1.rBDP_pSC_W[0, 0])+','+str(self.J1.rBDP_pSC_W[1, 0])+','+str(self.J2.rBDP_pSC_W[0, 0])+','+str(self.J2.rBDP_pSC_W[1, 0])+','+str(self.J3.rBDP_pSC_W[0, 0])+','+str(self.J3.rBDP_pSC_W[1, 0])+'\n'
+        print(String_RPM)
+        try:            
+            self.pEsp.write(b'%s'%String_RPM)
             EndCycle = time.time()
             TempoVerificacao = EndCycle - self.InicioCiclo
             self.Limpar_BarraDeStatus()
@@ -770,6 +805,61 @@ class JanelaPDI(object):
             self.Limpar_BarraDeStatus()
             self.Atualizar_BarrraDeStatus('Atenção cominicação não Foi iniciada => Frequência de Amostragem: %f' % TempoVerificacao)
 
+    def Comando_joystick(self):
+        # Inicializa a biblioteca pg
+        pg.init()
+
+        # Inicializa os robôs(pode dar erro pq a gente tem q fornecer alguns parâmetros, verifica isso por favor)
+        robots = [self.J1,self.J2,self.J3]
+        print(robots)
+
+        # Captura os joysticks
+        joysticks = []
+        for i in range(pg.joystick.get_count()):
+            joystick = pg.joystick.Joystick(i)
+            joystick.init()
+            joysticks.append(joystick)
+
+        Ctrl_Joystick = MY_JOYSTICK()
+        self.Var_Joystick = True
+        while self.Var_Joystick == True:
+            self.Var_Jogando = False
+            self.InicioCiclo = time.time()
+            self.Obter_DadosJogo()
+
+            # Captura eventos dos joysticks
+            for event in pg.event.get():
+                
+                if event.type == pg.JOYAXISMOTION:
+                    # Lê os valores dos joysticks
+                    Ctrl_Joystick.check_analog(joysticks, robots)
+
+                if event.type == pg.JOYBUTTONDOWN:
+
+                        if event.button == 4:
+                            # print('LB')
+                            Ctrl_Joystick.check_LT(joysticks, robots)
+                        if event.button == 5:
+                            # print('RB')
+                            Ctrl_Joystick.check_RT(joysticks, robots)  
+                    
+            # Aguarda um tempo para evitar sobrecarga do processador(pode tirar se quiser)
+            self.Acao_Jogo()
+            
+    def Comando_OuvirJuiz(self):
+        if self.juiz.penalty:
+            pass
+        elif self.juiz.freeball:
+            pass
+        elif self.juiz.goalkick:
+            pass
+        elif self.juiz.kickoff:
+            pass
+        elif self.juiz.halt:
+            self.Limpar_BarraDeStatus()
+            self.Atualizar_BarrraDeStatus("Partida Parada")
+
+        #print(self.play,self.penalty, self.freeball, self.goalkick, self.kickoff, self.favorable, self.quadrante,self.halt)
    # Executa o loop da janela
     def Comando_Iniciar(self):
         try:
@@ -781,7 +871,7 @@ class JanelaPDI(object):
     # Encerra a comunicação e fecha a janela
     def Encerrar_Comunicacao(self):
         try:
-            self.pEsp.close()
+            self.juiz.server_socket.close()
         except Exception as e:
             print(f"Erro ao encerrar a comunicação: {str(e)}")
         
@@ -793,3 +883,5 @@ class JanelaPDI(object):
             self.Janela.destroy()
         except Exception as e:
             print(f"Erro ao encerrar a janela: {str(e)}")
+
+

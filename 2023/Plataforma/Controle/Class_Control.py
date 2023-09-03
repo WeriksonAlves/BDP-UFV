@@ -7,31 +7,31 @@ class MY_TEAM(object):
         # Cor do jogador : j
         # Lado de ataque : l
         # Função em campo : f
-        self.rBDP_pPos_X    = np.zeros((3,1),dtype = np.int64)  # Postura atual
-        self.rBDP_pPos_Xa   = np.zeros((3,1))  # Postura anterior
-        self.rBDP_pPos_Xd   = np.zeros((3,1),dtype = np.int64)  # Postura desejada
-        self.rBDP_pPos_Xda  = np.zeros((3,1))  # Postura anterior desejada
-        self.rBDP_pPos_dX   = np.zeros((3,1))  # Derivada da postura atual
-        self.rBDP_pPos_dXd  = np.zeros((3,1))  # Derivada da postura desejada
-        self.rBDP_pPos_Xtil = np.zeros((3,1))  # Erro de posição
+        self.rBDP_pPos_X    = np.zeros((3,1),dtype = np.float64)  # Postura atual
+        self.rBDP_pPos_Xa   = np.zeros((3,1),dtype = np.float64)  # Postura anterior
+        self.rBDP_pPos_Xd   = np.zeros((3,1),dtype = np.float64)  # Postura desejada
+        self.rBDP_pPos_Xda  = np.zeros((3,1),dtype = np.float64)  # Postura anterior desejada
+        self.rBDP_pPos_dX   = np.zeros((3,1),dtype = np.float64)  # Derivada da postura atual
+        self.rBDP_pPos_dXd  = np.zeros((3,1),dtype = np.float64)  # Derivada da postura desejada
+        self.rBDP_pPos_Xtil = np.zeros((3,1),dtype = np.float64)  # Erro de posição
 
-        self.rBDP_pSC_a     = 37  # Distância centro ao ponto de controle
+        self.rBDP_pSC_a     = 32  # Distância centro ao ponto de controle
         self.rBDP_pSC_alpha = 0  # Angulo de controle
-        self.rBDP_pSC_r     = 20 # Raio da roda
+        self.rBDP_pSC_r     = 21.5 # Raio da roda
         self.rBDP_pSC_d     = 75 # Larguda do robôs
-        self.rBDP_pSC_U     = np.zeros((2,1))
-        self.rBDP_pSC_W     = np.zeros((2,1))
-        self.rBDP_pSC_PWM   = np.zeros((2,1))
-        self.rBDP_pSC_GAN   = np.zeros((2,1))
-        self.rBDP_pSC_GBN   = np.zeros((2,1))
+        self.rBDP_pSC_U     = np.zeros((2,1),dtype = np.float64)
+        self.rBDP_pSC_W     = np.zeros((2,1),dtype = np.float64)
+        self.rBDP_pSC_PWM   = np.zeros((2,1),dtype=int)
+        self.rBDP_pSC_GAN   = np.zeros((2,1),dtype = np.float64)
+        self.rBDP_pSC_GBN   = np.zeros((2,1),dtype = np.float64)
         # Dados iniciais dos Jogadores
 
         
-        # c: Cyan ou y: Yellow
-        if (t == np.array([255,255,0])).all():
-            self.rBDP_pTime   = 'c'
-        elif (t == np.array([0,255,255])).all():
-            self.rBDP_pTime   = 'y'
+        # c: Azul ou y: Amarelo
+        if (t == np.array([255, 0, 0])).all():
+            self.rBDP_pTime   = 'Azul'
+        elif (t == np.array([0, 255, 255])).all():
+            self.rBDP_pTime   = 'Amarelo'
         else:
             print('Erro na cor do time')
 
@@ -47,8 +47,8 @@ class MY_TEAM(object):
             self.rBDP_pCor   = 'r'
         elif (j == np.array([0,255,0])).all():
             self.rBDP_pCor   = 'g'
-        elif (j == np.array([255,0,0])).all():
-            self.rBDP_pCor   = 'b'
+        elif (j == np.array([255, 255, 0])).all():
+            self.rBDP_pCor   = 'c'
         elif (j == np.array([238,130,238])).all():
             self.rBDP_pCor   = 'm'
         else:
@@ -58,11 +58,11 @@ class MY_TEAM(object):
         # d: defensor
         # a: atacante
         if (f == 0):
-            self.rBDP_pFuncao   = 'g'
+            self.rBDP_pFuncao   = 'GK'
         elif (f == 1):
-            self.rBDP_pFuncao   = 'd'
+            self.rBDP_pFuncao   = 'DC'
         elif (f == 2):
-            self.rBDP_pFuncao   = 'a'
+            self.rBDP_pFuncao   = 'ST'
         else:
             print('Erro na função do jogador')
     
@@ -108,27 +108,17 @@ class MY_TEAM(object):
 
 
     def baixonivel(self):
-        Wmax = 20
 
         # Limites para envia PWM
-        limPWMp = np.array([40, 80])  # Velocidade positiva
-        limPWMn = np.array([-40, -80]) # Velocidade negativa
+        limRPM_p = np.array([0, 100])  # Velocidade positiva
+        limRPM_n = np.array([-0, -100]) # Velocidade negativa
 
         K2 = np.array([[1/2, 1/2], [1/self.rBDP_pSC_d, -1/self.rBDP_pSC_d]])
 
         #  CRIAR: Normalizar valores entre -100 e 100%
 
         self.rBDP_pSC_W = 1/self.rBDP_pSC_r*(np.linalg.inv(K2)@self.rBDP_pSC_U)
-    
-        for ii in range(0,2):
-
-            if np.abs(self.rBDP_pSC_W[ii][0]) > Wmax:
-                self.rBDP_pSC_W[ii][0] = np.sign(self.rBDP_pSC_W[ii][0])*Wmax
-
-            if self.rBDP_pSC_W[ii][0] > 0:
-                self.rBDP_pSC_PWM[ii][0] =  ((limPWMp[1]-limPWMp[0])/Wmax)*self.rBDP_pSC_W[ii] + limPWMp[0] + 150
-            else:
-                self.rBDP_pSC_PWM[ii][0] = -((limPWMn[1]-limPWMn[0])/Wmax)*self.rBDP_pSC_W[ii] + limPWMn[0] + 150
+        self.rBDP_pSC_W = self.rBDP_pSC_W*60/(2*np.pi) # Em RPM
 
     # Seta os maximos do sinal
     def set_speed(self,left ,right):
@@ -166,3 +156,33 @@ class BALL:
 
     def balldX(self):
         self.rBDP_pPos_dX = self.Bola_X - self.Bola_Xa
+
+class MY_JOYSTICK:
+    def __init__(self):
+        # Variaveis principais:
+        a=0
+
+    def check_analog(self, joysticks, robots):
+        for i,joystick in enumerate(joysticks):
+            x_axis = joystick.get_axis(2)
+            y_axis = joystick.get_axis(1)
+            left_speed = int(-y_axis * 60 - x_axis * 15)
+            right_speed = int(-y_axis * 60 + x_axis * 15)        
+            left_speed,right_speed = self.set_speed(left_speed,right_speed)
+            robots[i].rBDP_pSC_W = np.array([[left_speed + 150, right_speed + 150]]).T
+                        
+    def check_RT(self, joysticks, robots):
+        for i,joystick in enumerate(joysticks):
+        
+            robots[i].rBDP_pSC_W = np.array([[50,250]]).T
+    def check_LT(self, joysticks, robots):
+        for i,joystick in enumerate(joysticks):
+            robots[i].rBDP_pSC_W = np.array([[250,50]]).T
+
+    # Seta os maximos do sinal
+    def set_speed(self, left ,right):
+        left_speed = max(min(left,500),-500)
+        right_speed = max(min(right,500),-500)
+        return left_speed,right_speed
+
+

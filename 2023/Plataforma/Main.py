@@ -20,7 +20,6 @@ from Camera.Classe_Camera import*
 from Cores.Classe_Cores import*
 from Campo.Classe_Campo import*
 from PDI.Classe_PDI import*
-# from Game.Test_Class_Game_24_06 import*
 
 import sys
 import os
