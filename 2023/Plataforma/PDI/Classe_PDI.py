@@ -53,17 +53,19 @@ class JanelaPDI(object):
         self.PastaAtual = os.path.dirname(__file__)
         self.ImagemCampo_px = cv2.imread(os.path.join(self.PastaAtual, 'Campo_px.png'))
         self.Var_PosPart = np.zeros((3,7), dtype=np.float64)
-        
+        self.Sai = False
+
         self.juiz = referee_class(HOST='192.168.0.159')
         threading.Thread(target=self.juiz.message).start()
-        
+        pg.init() # Inicializa a biblioteca pg
+
         # Executa as funções de criação dos elementos da janela
         self.Criar_Janela()
         self.Criar_TextoInformacoes()
         self.Criar_CheckButton()
         self.Criar_ComboBox()
         self.Criar_Botoes()
-        # threading.Thread(target=self.Comando_Main).start()
+        threading.Thread(target=self.Comando_Main).start()
     
     # Cria e configura a sub janela
     def Criar_Janela(self):
@@ -240,13 +242,13 @@ class JanelaPDI(object):
         But_IniciarPartida = Button(self.Janela, text="Iniciar Partida", command=self.Comando_IniciarPartida)
         But_IniciarPartida.place(height=50, width=200, x=50, y=250)
 
-        But_PararPartida = Button(self.Janela, text="Parar Partida", command=self.Comando_EncerrarPartida)
-        But_PararPartida.place(height=50, width=200, x=50, y=310)
+        self.But_PararPartida = Button(self.Janela, text="Parar Partida", command=self.Comando_EncerrarPartida)
+        self.But_PararPartida.place(height=50, width=200, x=50, y=310)
 
         But_TesteMecanico = Button(self.Janela, text="Teste Mecânico", command=lambda: threading.Thread(target=self.Comando_TesteMecanico).start())
         But_TesteMecanico.place(height=50, width=200, x=50, y=370)
 
-        But_Sistema = Button(self.Janela, text="Ativar joystick", command=lambda: threading.Thread(target=self.Comando_joystick).start())
+        But_Sistema = Button(self.Janela, text="Ativar joystick", command= self.Comando_joystick)
         But_Sistema.place(height=50, width=200, x=50, y=430)
 
         But_VisualizarCamera = Button(self.Janela, text="Ver Câmera", command=lambda: threading.Thread(target=self.Comando_VisualizarCamera).start())
@@ -503,7 +505,11 @@ class JanelaPDI(object):
         self.Limpar_BarraDeStatus()
         self.Atualizar_BarrraDeStatus("Partida Iniciada")
         
-        while True:            
+        while True: 
+            if self.Sai == True:
+                print('Sai')
+                break
+
             if self.Var_Jogando or self.juiz.play:
                 self.Var_Joystick = False
                 self.InicioCiclo = time.time()
@@ -536,12 +542,49 @@ class JanelaPDI(object):
 
                 # self.Limpar_BarraDeStatus()
                 # self.Atualizar_BarrraDeStatus("Partida Iniciada")
-            else: 
-                print('Sai')
-                break
+            
+            elif self.Var_Joystick == True:
+                # Inicializa os robôs(pode dar erro pq a gente tem q fornecer alguns parâmetros, verifica isso por favor)
+                robots = [self.J1,self.J2,self.J3]
+                print('Joystick')
+
+                # Captura os joysticks
+                joysticks = []
+                for i in range(pg.joystick.get_count()):
+                    joystick = pg.joystick.Joystick(i)
+                    joystick.init()
+                    joysticks.append(joystick)
+
+                Ctrl_Joystick = MY_JOYSTICK()
+
+                while self.Var_Joystick == True:
+                    self.Var_Jogando = False
+                    self.InicioCiclo = time.time()
+                    self.Obter_DadosJogo()
+
+                    # Captura eventos dos joysticks
+                    for event in pg.event.get():
+                        
+                        if event.type == pg.JOYAXISMOTION:
+                            # Lê os valores dos joysticks
+                            Ctrl_Joystick.check_analog(joysticks, robots)
+
+                        if event.type == pg.JOYBUTTONDOWN:
+
+                                if event.button == 4:
+                                    # print('LB')
+                                    Ctrl_Joystick.check_LT(joysticks, robots)
+                                if event.button == 5:
+                                    # print('RB')
+                                    Ctrl_Joystick.check_RT(joysticks, robots)  
+                            
+                    # Aguarda um tempo para evitar sobrecarga do processador(pode tirar se quiser)
+                    self.Acao_Jogo()
 
     # Obtem os dados dos jogadores e envia o comando
     def Comando_IniciarPartida(self):
+        if self.Var_Joystick: return None
+        print('Partida')
         self.Var_Jogando = True
 
     def Comando_EncerrarPartida(self):
@@ -806,48 +849,16 @@ class JanelaPDI(object):
             self.Atualizar_BarrraDeStatus('Atenção cominicação não Foi iniciada => Frequência de Amostragem: %f' % TempoVerificacao)
 
     def Comando_joystick(self):
-        # Inicializa a biblioteca pg
-        pg.init()
-
-        # Inicializa os robôs(pode dar erro pq a gente tem q fornecer alguns parâmetros, verifica isso por favor)
-        robots = [self.J1,self.J2,self.J3]
-        print(robots)
-
-        # Captura os joysticks
-        joysticks = []
-        for i in range(pg.joystick.get_count()):
-            joystick = pg.joystick.Joystick(i)
-            joystick.init()
-            joysticks.append(joystick)
-
-        Ctrl_Joystick = MY_JOYSTICK()
+        if self.Var_Jogando or self.juiz.play: return None
         self.Var_Joystick = True
-        while self.Var_Joystick == True:
-            self.Var_Jogando = False
-            self.InicioCiclo = time.time()
-            self.Obter_DadosJogo()
-
-            # Captura eventos dos joysticks
-            for event in pg.event.get():
-                
-                if event.type == pg.JOYAXISMOTION:
-                    # Lê os valores dos joysticks
-                    Ctrl_Joystick.check_analog(joysticks, robots)
-
-                if event.type == pg.JOYBUTTONDOWN:
-
-                        if event.button == 4:
-                            # print('LB')
-                            Ctrl_Joystick.check_LT(joysticks, robots)
-                        if event.button == 5:
-                            # print('RB')
-                            Ctrl_Joystick.check_RT(joysticks, robots)  
-                    
-            # Aguarda um tempo para evitar sobrecarga do processador(pode tirar se quiser)
-            self.Acao_Jogo()
+        print('Joy')
             
     def Comando_OuvirJuiz(self):
-        if self.juiz.penalty:
+        if self.juiz.play:
+            self.Comando_Main
+        elif not self.juiz.play:
+            self.Comando_EncerrarPartida        
+        elif self.juiz.penalty:
             pass
         elif self.juiz.freeball:
             pass
@@ -860,7 +871,8 @@ class JanelaPDI(object):
             self.Atualizar_BarrraDeStatus("Partida Parada")
 
         #print(self.play,self.penalty, self.freeball, self.goalkick, self.kickoff, self.favorable, self.quadrante,self.halt)
-   # Executa o loop da janela
+    
+    # Executa o loop da janela
     def Comando_Iniciar(self):
         try:
             self.Janela.protocol("WM_DELETE_WINDOW", self.Encerrar_Comunicacao)
@@ -872,6 +884,7 @@ class JanelaPDI(object):
     def Encerrar_Comunicacao(self):
         try:
             self.juiz.server_socket.close()
+            self.Sai = True
         except Exception as e:
             print(f"Erro ao encerrar a comunicação: {str(e)}")
         

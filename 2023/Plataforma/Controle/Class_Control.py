@@ -164,20 +164,27 @@ class MY_JOYSTICK:
 
     def check_analog(self, joysticks, robots):
         for i,joystick in enumerate(joysticks):
-            x_axis = joystick.get_axis(2)
+            x_axis = joystick.get_axis(3)
             y_axis = joystick.get_axis(1)
-            left_speed = int(-y_axis * 60 - x_axis * 15)
-            right_speed = int(-y_axis * 60 + x_axis * 15)        
+
+            ValorMin = 150
+            if x_axis < 0: sum1 = ValorMin
+            else: sum1 = -ValorMin
+            if y_axis < 0: sum2 = ValorMin
+            else: sum2 = -ValorMin
+            
+            left_speed = int(-y_axis * 400 + sum2)
+            right_speed = int(-x_axis * 400 + sum1)        
             left_speed,right_speed = self.set_speed(left_speed,right_speed)
-            robots[i].rBDP_pSC_W = np.array([[left_speed + 150, right_speed + 150]]).T
+            robots[i].rBDP_pSC_W = np.array([[left_speed, right_speed]]).T
                         
     def check_RT(self, joysticks, robots):
         for i,joystick in enumerate(joysticks):
-        
-            robots[i].rBDP_pSC_W = np.array([[50,250]]).T
+            robots[i].rBDP_pSC_W = np.array([[-500,500]]).T
+
     def check_LT(self, joysticks, robots):
         for i,joystick in enumerate(joysticks):
-            robots[i].rBDP_pSC_W = np.array([[250,50]]).T
+            robots[i].rBDP_pSC_W = np.array([[500,-500]]).T
 
     # Seta os maximos do sinal
     def set_speed(self, left ,right):
