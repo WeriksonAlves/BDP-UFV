@@ -1,6 +1,6 @@
 import pygame as pg
 import time
-from Control.Class_Control import*
+from Controle.Class_Control import*
 import serial
 
 # Inicializa a biblioteca pg
@@ -14,6 +14,7 @@ Var_P1_Function = 0
 # Inicializa os robôs(pode dar erro pq a gente tem q fornecer alguns parâmetros, verifica isso por favor)
 robots = [MY_TEAM(Var_MyTeam_Color_BGR,Color_Player_1,Var_AttackSide,Var_P1_Function), MY_TEAM(Var_MyTeam_Color_BGR,Color_Player_1,Var_AttackSide,Var_P1_Function)]
 print(robots)
+
 # Captura os joysticks
 joysticks = []
 for i in range(pg.joystick.get_count()):
@@ -49,10 +50,10 @@ porta = serial.Serial('COM9', 115200, timeout=2)
 porta.close()
 porta.open()
 
-while True:
-    porta.write([1, 2, 50, 250, 200, 100, 50, 250, 3, 10])
-    # if time.time() - start > 1:
-    #     break            
+# while True:
+#     porta.write([1, 2, 50, 250, 200, 100, 50, 250, 3, 10])
+#     # if time.time() - start > 1:
+#     #     break            
 # 
 # Loop principal
 while True:
