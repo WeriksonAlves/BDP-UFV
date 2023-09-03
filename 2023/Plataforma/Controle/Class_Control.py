@@ -167,14 +167,14 @@ class MY_JOYSTICK:
             x_axis = joystick.get_axis(3)
             y_axis = joystick.get_axis(1)
 
-            ValorMin = 150
+            ValorMin = 0
             if x_axis < 0: sum1 = ValorMin
             else: sum1 = -ValorMin
             if y_axis < 0: sum2 = ValorMin
             else: sum2 = -ValorMin
-            
-            left_speed = int(-y_axis * 400 + sum2)
-            right_speed = int(-x_axis * 400 + sum1)        
+
+            left_speed = int(-y_axis * 100 + sum2)
+            right_speed = int(-x_axis * 100 + sum1)        
             left_speed,right_speed = self.set_speed(left_speed,right_speed)
             robots[i].rBDP_pSC_W = np.array([[left_speed, right_speed]]).T
                         

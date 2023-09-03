@@ -236,29 +236,29 @@ class JanelaPDI(object):
         But_IniciarComunicacao = Button(self.Janela, text="Abrir/Fechar \nComunicação", command=self.Comando_IniciarComunicacao)
         But_IniciarComunicacao.place(height=50, width=200, x=50, y=130)
 
-        But_Joystick = Button(self.Janela, text="Ativar Sistema", command=lambda: threading.Thread(target=self.Comando_Main).start())
-        But_Joystick.place(height=50, width=200, x=50, y=190)
+        # But_Joystick = Button(self.Janela, text="Ativar Sistema", command=lambda: threading.Thread(target=self.Comando_Main).start())
+        # But_Joystick.place(height=50, width=200, x=50, y=190)
 
         But_IniciarPartida = Button(self.Janela, text="Iniciar Partida", command=self.Comando_IniciarPartida)
-        But_IniciarPartida.place(height=50, width=200, x=50, y=250)
+        But_IniciarPartida.place(height=50, width=200, x=50, y=190)
 
         self.But_PararPartida = Button(self.Janela, text="Parar Partida", command=self.Comando_EncerrarPartida)
-        self.But_PararPartida.place(height=50, width=200, x=50, y=310)
+        self.But_PararPartida.place(height=50, width=200, x=50, y=250)
+
+        But_Sistema = Button(self.Janela, text="Ativar joystick", command= self.Comando_joystick)
+        But_Sistema.place(height=50, width=200, x=50, y=310)
 
         But_TesteMecanico = Button(self.Janela, text="Teste Mecânico", command=lambda: threading.Thread(target=self.Comando_TesteMecanico).start())
         But_TesteMecanico.place(height=50, width=200, x=50, y=370)
 
-        But_Sistema = Button(self.Janela, text="Ativar joystick", command= self.Comando_joystick)
-        But_Sistema.place(height=50, width=200, x=50, y=430)
-
         But_VisualizarCamera = Button(self.Janela, text="Ver Câmera", command=lambda: threading.Thread(target=self.Comando_VisualizarCamera).start())
-        But_VisualizarCamera.place(height=50, width=200, x=50, y=490)
+        But_VisualizarCamera.place(height=50, width=200, x=50, y=430)
 
         But_VisualizarSegmentacao = Button(self.Janela, text="Ver Segmentação", command=lambda: threading.Thread(target=self.Comando_VisualizarSegmentacao).start())
-        But_VisualizarSegmentacao.place(height=50, width=200, x=50, y=550)
+        But_VisualizarSegmentacao.place(height=50, width=200, x=50, y=490)
 
         But_VisualizarAssociacao = Button(self.Janela, text="Ver Associação", command=lambda: threading.Thread(target=self.Comando_VisualizarAssociacao).start())
-        But_VisualizarAssociacao.place(height=50, width=200, x=50, y=610)
+        But_VisualizarAssociacao.place(height=50, width=200, x=50, y=550)
 
     def Comando_SalvarConfiguracao(self):
         # Cria a matriz de configurações de jogo
@@ -369,7 +369,7 @@ class JanelaPDI(object):
         return Matriz
     
     # Procura e conecta o transmissor
-    def Comando_IniciarComunicacao(self, tsim=3):
+    def Comando_IniciarComunicacao(self, tsim=2):
         try:
             # Detecta automaticamente a porta COM do dispositivo ESP
             porta_serial = self.Detectar_Porta_Serial_ESP()
@@ -391,15 +391,9 @@ class JanelaPDI(object):
                 while True:
                     t = time.time() - start
 
-                    if t > 4*tsim/5: n = 100
-                    elif t > 3*tsim/5: n = 80
-                    elif t > 2*tsim/5: n = 60
-                    elif t > 1*tsim/5: n = 40
-                    else: n = 20
-
-                    self.pEsp.write([1, 2, int(150+n), int(150+n), int(150+n), int(150+n), int(150+n), int(150+n), 3, 10])
+                    self.pEsp.write(b'100,-100,100,-100,100,-100\n')
                     if t > tsim:
-                        self.pEsp.write([1, 2, int(0), int(0), int(0), int(0), int(0), int(0), 3, 10])
+                        self.pEsp.write(b'0,0,0,0,0,0\n')
                         break
 
                 # Ativa a variável de controle de comunicação e atualiza a barra de status
@@ -832,12 +826,20 @@ class JanelaPDI(object):
         X, Y = int(Posicao[0] + 900), int(Posicao[1] + 750)        
         cv2.circle(Campo_Virtual, (X, Y), raio, Cor, -1)  # O valor -1 preenche o círculo
     
+    def __conver2byte(self, elements:np.array) -> str : 
+        string_empty = ''
+        for value in elements:
+            string_empty += str(value) + ','
+        string_empty = string_empty[:-1] + '\n'
+        return string_empty.encode('utf-8')
+
     def Acao_Jogo(self):
         # print(f"1: {self.J1.rBDP_pSC_W[0]}, {self.J1.rBDP_pSC_W[1]}, 2: {self.J2.rBDP_pSC_W[0]}, {self.J2.rBDP_pSC_W[1]}, 3: {self.J3.rBDP_pSC_W[0]}, {self.J3.rBDP_pSC_W[1]}")
-        String_RPM = str(self.J1.rBDP_pSC_W[0, 0])+','+str(self.J1.rBDP_pSC_W[1, 0])+','+str(self.J2.rBDP_pSC_W[0, 0])+','+str(self.J2.rBDP_pSC_W[1, 0])+','+str(self.J3.rBDP_pSC_W[0, 0])+','+str(self.J3.rBDP_pSC_W[1, 0])+'\n'
-        print(String_RPM)
+        # String_RPM = str(self.J1.rBDP_pSC_W[0, 0])+','+str(self.J1.rBDP_pSC_W[1, 0])+','+str(self.J2.rBDP_pSC_W[0, 0])+','+str(self.J2.rBDP_pSC_W[1, 0])+','+str(self.J3.rBDP_pSC_W[0, 0])+','+str(self.J3.rBDP_pSC_W[1, 0])+'\n'
+        rpm_list = [self.J1.rBDP_pSC_W[0, 0], self.J1.rBDP_pSC_W[1, 0], self.J2.rBDP_pSC_W[0, 0], self.J2.rBDP_pSC_W[1, 0], self.J3.rBDP_pSC_W[0, 0], self.J3.rBDP_pSC_W[1, 0]]
+        print(rpm_list)
         try:            
-            self.pEsp.write(b'%s'%String_RPM)
+            self.pEsp.write(self.__conver2byte(rpm_list))
             EndCycle = time.time()
             TempoVerificacao = EndCycle - self.InicioCiclo
             self.Limpar_BarraDeStatus()
