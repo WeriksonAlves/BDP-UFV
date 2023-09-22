@@ -1,1 +1,0 @@
-set(Partida.ID,'Visible','off');

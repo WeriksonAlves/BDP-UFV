@@ -1,7 +1,0 @@
-syntax = "proto3";
-
-message Dados {
-  string nome = 1;
-  int32 idade = 2;
-  repeated string interesses = 3;
-}
