@@ -1,0 +1,390 @@
+import numpy as np
+import math
+from matplotlib.patches import Polygon
+import matplotlib.pyplot as plt
+
+class JOGADOR:
+    def __init__(self, ID=0):
+        # Properties or Parameters
+        self.pCAD = None  # Pioneer 3DX 3D image
+        self.pID = ID     # Identification
+
+        # Navigation Data and Communication
+        self.pData = None  # Flight Data
+        self.pCom = None   # Communication
+
+        # Initialize control variables, parameters, and flags
+        self.iControlVariables()
+        self.iParameters()
+        self.iFlags()
+
+        # # Load and make CAD
+        # self.mCADload()
+        self.mCADmake()
+
+    def iControlVariables(self):
+        """
+        Control variable initialization
+        """
+        self.pPos = pPos()
+        self.pSC = pSC()
+
+    def iParameters(self):
+        """
+        Parameter initialization
+        """
+        self.pPar = pPar()
+
+    def iFlags(self):
+        """
+        Flag initialization
+        """
+        self.pFlag = iFlags()
+        
+    def sKinematicModel(self):
+        """
+        Update the robot's pose based on the control signal using the kinematic model.
+
+        Args:
+            p3dx: An instance of the Pioneer3DX class.
+        """
+        # Kinematic Matrix
+        K = np.array([
+            [np.cos(self.pPos.X[5,0]), -self.pPar.a * np.sin(self.pPos.X[5,0] + self.pPar.alpha)],
+            [np.sin(self.pPos.X[5,0]), self.pPar.a * np.cos(self.pPos.X[5,0] + self.pPar.alpha)],
+            [0, 1]
+        ])
+
+        # Current position
+        self.pPos.X[[0, 1, 5]] = self.pPos.X[[0, 1, 5]] + np.dot(K, self.pSC.U[[0, 1]]) * self.pPar.Ts
+        # self.pPos.X[[0, 1, 5]] = self.pPos.Xd[[0, 1, 5]]
+
+
+        # First-time derivative of the current position
+        self.pPos.X[[6, 7, 11]] = np.dot(K, self.pSC.U[[0, 1]])
+
+        # Angle limitation per quadrant
+        for ii in range(3, 6):
+            if abs(self.pPos.X[ii]) > np.pi:
+                if self.pPos.X[ii] < 0:
+                    self.pPos.X[ii] = self.pPos.X[ii] + 2 * np.pi
+                else:
+                    self.pPos.X[ii] = self.pPos.X[ii] - 2 * np.pi
+
+        # Pose of the robot's center
+        self.pPos.Xc[[0, 1, 5]] = self.pPos.X[[0, 1, 5]] - np.dot(np.array([[np.cos(self.pPos.X[5,0]), -np.sin(self.pPos.X[5,0]), 0],
+                                                                            [np.sin(self.pPos.X[5,0]), np.cos(self.pPos.X[5,0]), 0],
+                                                                            [0, 0, 1]]), 
+                                                                  np.array([[self.pPar.a * np.cos(self.pPar.alpha)],
+                                                                            [self.pPar.a * np.sin(self.pPar.alpha)],
+                                                                            [0]]))
+
+    def sInvKinematicModel(self, dXr):
+        """
+        Calculate the robot velocity based on the reference velocity using the inverse kinematic model.
+
+        Args:
+            dXr: A 2x1 or 3x1 NumPy array representing the reference velocity [dx, dy] or [dx, dy, dtheta].
+
+        Returns:
+            Ur: A 2x1 or 3x1 NumPy array representing the calculated robot velocity [V, omega].
+        """
+        # Determine vector length
+        l = len(dXr)
+
+        if l == 2:
+            # Inverse Kinematic Matrix (2D)
+            Kinv = np.array([
+                [np.cos(self.pPos.X[5,0]), np.sin(self.pPos.X[5,0])],
+                [-np.sin(self.pPos.X[5,0]) / self.pPar.a, np.cos(self.pPos.X[5,0]) / self.pPar.a]
+            ])
+        elif l == 3:
+            # Inverse Kinematic Matrix (3D)
+            Kinv = np.array([
+                [np.cos(self.pPos.X[5,0]), np.sin(self.pPos.X[5,0]), 0],
+                [-np.sin(self.pPos.X[5,0]) / self.pPar.a, np.cos(self.pPos.X[5,0]) / self.pPar.a, 0],
+                [0, 0, 0]
+            ])
+        else:
+            print('Invalid vector length (please verify dXr).')
+            Kinv = np.zeros((l, 3))
+
+        # Reference control signal
+        Ur = np.dot(Kinv, dXr)
+
+        return Ur
+
+    # Dynamic model
+    def sDynamicModel(self):
+        # Implement this method as needed
+        pass
+
+    def rSetPose(self, Xo):
+        """
+        Set the robot's pose.
+
+        Args:
+            Xo: A 1x4 NumPy array representing the new pose [x, y, z, psi].
+                Defaults to None.
+        """
+        if Xo is not None:
+            self.pPos.Xc[[0, 1, 2, 5]] = Xo
+
+
+        translation_vector = np.array([
+            [self.pPar.a * np.cos(self.pPar.alpha)],
+            [self.pPar.a * np.sin(self.pPar.alpha)],
+            [0],
+            [1]
+        ])
+
+        rotation_matrix = np.array([[np.cos(self.pPos.X[5,0]), -np.sin(self.pPos.X[5,0]), 0, 0],
+                                    [np.sin(self.pPos.X[5,0]), np.cos(self.pPos.X[5,0]), 0, 0],
+                                    [0, 0, 1, 0],
+                                    [0, 0, 0, 1]])
+
+        
+
+        new_pose = np.dot(rotation_matrix, translation_vector)
+        new_pose[3,0] = self.pPos.Xc[[5]]
+        
+        self.pPos.X[[0, 1, 2, 5]] = self.pPos.Xc[[0, 1, 2, 5]] + new_pose
+
+        self.pPos.Xa = self.pPos.X
+
+        if self.pFlag.Connected:
+            # The position is given in millimeters and
+            # the heading in degrees
+            self.set_pose(self.pPos.Xc[0] , self.pPos.Xc[1], self.pPos.Xc[5])
+
+    def rGetSensorData(self):
+        """
+        Get sensor data and update robot pose.
+        """
+        # Store past position
+        self.pPos.Xa = self.pPos.X
+
+        if self.pFlag.Connected:
+            # MobileSim or Real BDP
+            # Robot pose from ARIA
+            self.pPos.Xc[0] = self.get_x()   # x
+            self.pPos.Xc[1] = self.get_y()   # y
+            self.pPos.Xc[5] = self.get_psi() #/ 180 * math.pi  # psi
+
+            # Robot velocities
+            self.pSC.Ua = self.pSC.U[:]
+            self.pSC.U[0] = self.get_vel()   # linear
+            self.pSC.U[1] = self.get_rotvel() #/ 180 * math.pi  # angular
+
+            K1 = np.array([[math.cos(self.pPos.Xc[5]), 0],
+                        [math.sin(self.pPos.Xc[5]), 0]])
+
+            K2 = np.array([[math.cos(self.pPos.Xc[5]), -self.pPar.a * math.sin(self.pPos.Xc[5])],
+                        [math.sin(self.pPos.Xc[5]), self.pPar.a * math.cos(self.pPos.Xc[5])]])
+
+            self.pPos.Xc[6:8] = np.dot(K1, self.pSC.U)
+            self.pPos.Xc[11] = self.pSC.U[1]
+
+            # Pose of the Control point
+            self.pPos.X[0:3] = self.pPos.Xc[0:3] + np.dot(np.array([self.pPar.a * math.cos(self.pPos.Xc[5]),
+                                                                    self.pPar.a * math.sin(self.pPos.Xc[5]), 0]), [1, 1, 1])
+            self.pPos.X[3:6] = self.pPos.Xc[3:6]
+            self.pPos.X[6:8] = np.dot(K2, self.pSC.U)
+            self.pPos.X[11] = self.pSC.U[1]
+
+        else:
+            # Simulation
+            # Robot center position
+            self.pPos.Xc[[0, 1, 5]] = self.pPos.X[[0, 1, 5]] - np.array([[self.pPar.a * math.cos(self.pPos.X[5,0])],
+                                                                         [self.pPar.a * math.sin(self.pPos.X[5,0])],
+                                                                         [0]])
+
+    def rSendControlSignals(self,pEsp):
+        """
+        Send control signals to the self.
+        """
+        K2 = np.array([[1/2, 1/2], [1/self.pPar.d, -1/self.pPar.d]])
+        #  CRIAR: Normalizar valores entre -100 e 100%
+
+        self.pSC.RPM = 1/self.pPar.r*(np.linalg.inv(K2)@self.pSC.Ud)
+        self.pSC.RPM = self.pSC.RPM*60/(2*np.pi) # Em RPM
+
+        rpm_list = [int(self.pSC.RPM[1,0]),int(self.pSC.RPM[0,0])]
+        print(f'{rpm_list[0],rpm_list[1],self.pSC.Ud[0],self.pSC.Ud[1]}')
+        pEsp.write(self.__conver2byte(rpm_list))
+
+    def simulationSend(self):
+        self.pSC.U = self.pSC.Ud
+        self.sKinematicModel()
+
+    def __conver2byte(self, elements:np.array) -> str : 
+        string_empty = ''
+        for value in elements:
+            string_empty += str(value) + ','
+        string_empty = string_empty[:-1] + '\n'
+        return string_empty.encode('utf-8')
+
+    def get_x(self):
+        # X(0)
+        return self.pPos.X[0,0]
+
+    def get_y(self):
+        # X(1)
+        return self.pPos.X[1,0]
+
+    def get_psi(self):
+        # X(3)
+        return self.pPos.X[5,0]
+
+    def get_vel(self):
+        # Vel. Linear norma p.pPos.X 7,8,9
+        return math.sqrt((self.pPos.X[6]) ** 2 + (self.pPos.X[7]) ** 2 + (self.pPos.X[8]) ** 2)
+
+    def get_rotvel(self):
+        # Vel. Angular norma p.pPos.X 10,11,12
+        return math.sqrt((self.pPos.X[9]) ** 2 + (self.pPos.X[10]) ** 2 + (self.pPos.X[11]) ** 2)
+
+    def set_vel(self, vel):
+        # Definir a velocidade angular por p.pSC.U(2)
+        self.pSC.U[0] = vel
+
+    def set_rotvel(self, rotvel):
+        # Definir a velocidade angular por p.pSC.U(2)
+        self.pSC.U[1] = rotvel
+
+    def set_pose(self, pose):
+        # Transformação Homogênea:
+        trans_matrix = np.array([[np.cos(pose[2]), (-1) * np.sin(pose[2]), 0, pose[0]],
+                                 [np.sin(pose[2]), np.cos(pose[2]), 0, pose[1]],
+                                 [0, 0, 1, 0],
+                                 [0, 0, 0, 1]])
+
+        self.square_points[0, :] = np.dot(trans_matrix, np.concatenate((self.origin[0, :], [0, 1]), axis=0))[0:2]
+
+        self.square_points[1, :] = np.dot(trans_matrix, np.concatenate((self.origin[1, :], [0, 1]), axis=0))[0:2]
+
+        self.square_points[2, :] = np.dot(trans_matrix, np.concatenate((self.origin[2, :], [0, 1]), axis=0))[0:2]
+
+        self.square_points[3, :] = np.dot(trans_matrix, np.concatenate((self.origin[3, :], [0, 1]), axis=0))[0:2]
+
+        self.shape.set_xy(self.square_points)
+
+    def Draw(self, fig, axis):
+        grid_1 = fig.add_subplot()
+        grid_1.add_patch(self.shape)
+        
+
+    # # Load CAD
+    # def mCADload(self):
+    #     # Implement this method as needed
+    #     pass
+    #
+    # Make CAD
+    def mCADmake(self):
+        # Simulation:
+        self.square_points = np.array([[-0.04, -0.04],
+                                       [-0.04, 0.04],
+                                       [0.04, 0.04],
+                                       [0.04, -0.04]])
+
+        self.origin = np.array([[-0.04, -0.04],
+                                [-0.04,  0.04],
+                                [ 0.04,  0.04],
+                                [ 0.04, -0.04]])
+
+        self.shape = Polygon(self.square_points, closed=False)
+    #
+    # # Plot CAD
+    # def mCADplot(self):
+    #     # Implement this method as needed
+    #     pass
+    #
+    # # Delete CAD
+    # def mCADdel(self):
+    #     # Implement this method as needed
+    #     pass
+    #
+    # Plot 2D CAD
+    # def mCADplot2D(self, fig):
+    #     pass
+    #
+    # Set CAD color
+    def mCADcolor(self, color):
+        self.shape.set_color(color)
+
+
+class pPos:
+    def __init__(self):
+        # .......... Robot pose ..........
+        self.X = np.zeros((12, 1),dtype = np.float64)  # Current pose (point of control)
+        self.Xa = np.zeros((12, 1),dtype = np.float64)  # Past pose
+
+        self.Xc = np.zeros((12, 1),dtype = np.float64)  # Current pose (center of the robot)
+
+        self.Xd = np.zeros((12, 1),dtype = np.float64)  # Desired pose
+        self.Xda = np.zeros((12, 1),dtype = np.float64)  # Past desired pose
+
+        self.Xr = np.zeros((12, 1),dtype = np.float64)  # Reference pose
+        self.Xra = np.zeros((12, 1),dtype = np.float64)  # Past reference pose
+
+        # First time derivative:
+        self.dX = np.zeros((12, 1),dtype = np.float64)  # Current pose
+        self.dXd = np.zeros((12, 1),dtype = np.float64)  # Desired pose
+        self.dXr = np.zeros((12, 1),dtype = np.float64)  # Reference pose
+
+        # Pose error:
+        self.Xtil = self.Xd - self.X
+
+class pSC:
+    def __init__(self):
+        # .......... Signals of Control  ..........
+        # Linear and Angular Velocity:
+        self.U = np.array([[0], [0]],dtype=np.float64)  # Current
+        self.Ua = np.array([[0], [0]],dtype=np.float64)  # Past
+        self.Ud = np.array([[0], [0]],dtype=np.float64)  # Desired
+        self.Uda = np.array([[0], [0]],dtype=np.float64)  # Past desired
+        self.Ur = np.array([[0], [0]],dtype=np.float64)  # Reference
+        self.Kinematics_control = 0
+
+        # Linear and Angular Acceleration:
+        self.dU = np.array([[0], [0]],dtype=np.float64)  # Current
+        self.dUd = np.array([[0], [0]],dtype=np.float64)  # Desired
+
+        # RPM
+        self.RPM = np.array([[0], [0]],dtype=np.float64)
+
+class pPar:
+    def __init__(self):
+        self.Model = 'BDPJOG'  # robot model
+
+        # Sample time
+        self.Ts = 0.1  # For numerical integration
+        self.ti = None  # Flag time
+
+        # Dynamic Model Parameters
+        self.g = 9.8  # [kg.m/s^2] Gravitational acceleration
+
+        # [kg]
+        # self.m = 0.429  # 0.442;
+
+        # [m and rad]
+        self.a = 32  # point of control
+        self.alpha = 0  # angle of control
+        self.r = 21.5 # Raio da roda
+        self.d = 75 # Larguda do robôs
+
+        # [Identified Parameters]
+        # Reference:
+        # Martins, F. N., & Brandão, A. S. (2018).
+        # Motion Control and Velocity-Based Dynamic Compensation for Mobile Robots.
+        # In Applications of Mobile Robots. IntechOpen.
+        # DOI: http://dx.doi.org/10.5772/intechopen.79397
+        # self.pPar.theta = [0.5338, 0.2168, -0.0134, 0.9560, -0.0843, 1.0590]
+
+class iFlags:
+    def __init__(self):
+        # Flags
+        self.Connected = 0
+        self.JoyON = 0
+        self.GPS = 0
+        self.EmergencyStop = 0

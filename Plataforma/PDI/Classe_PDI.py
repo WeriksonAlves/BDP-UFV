@@ -13,7 +13,8 @@ from tkinter import ttk,messagebox
 
 from referee.referee_class import*
 from Controle.Class_Control import*
-# from Controle.Classe_Joystick import*
+from Robo_BDP.Classe_JOG import*
+from Robo_BDP.Funções.Controls import *
 
 import pygame as pg
 import cv2
@@ -25,6 +26,7 @@ import serial.tools.list_ports
 import time
 import math
 import itertools
+import matplotlib.pyplot as plt
 
 # Criação da janela responsável pelas configurações da partida
 class JanelaPDI(object):
@@ -55,7 +57,7 @@ class JanelaPDI(object):
         self.Var_PosPart = np.zeros((3,7), dtype=np.float64)
         self.Sai = False
 
-        self.juiz = referee_class(HOST='192.168.0.159')
+        self.juiz = referee_class(HOST='192.168.0.106')
         threading.Thread(target=self.juiz.message).start()
         pg.init() # Inicializa a biblioteca pg
 
@@ -201,7 +203,6 @@ class JanelaPDI(object):
         Cor_J1_2 = StringVar()
         Cor_J2_2 = StringVar()
         Cor_J3_2 = StringVar()
-
 
         self.Var_J1_Funcao = ttk.Combobox(self.Janela, state= 'readonly', textvariable= Funcao_J1, values= Lista_Funcoes, justify= 'center')
         self.Var_J1_Funcao.place(height= 20, width= 100, x= 310, y= 110)        
@@ -422,78 +423,151 @@ class JanelaPDI(object):
 
     # Faz a rotina de teste mecanico/PDI/Controle no campo
     def Comando_TesteMecanico(self):
-        '''
-        Executa uma elipse para cada robô seguir
-        Rx: Raio em x
-        Ry: Raio em y
-        w: Período da elipse
-        '''
+        def tic():
+            return time.time()
+
+        def toc(t):
+            return time.time() - t
+        
+        def Comando_VerTeste():
+            while True:
+                Campo_Virtual = Comando_DesenhaTeste(P.pPos.X[[0,1,5]], self.CorCamisa_BGR[0], P.pPos.Xd[[0,1,5]],[255,255,255])
+                
+                cv2.imshow("Visao Associacao", Campo_Virtual)
+                cv2.waitKey(self.Var_FPS) # Está em 25 milisegundos = 40 fps
+                if (cv2.getWindowProperty("Visao Associacao", cv2.WND_PROP_VISIBLE) < 1):
+                    break
+        
+        def Comando_DesenhaTeste(P_X, P_Cor, P_Xd, Cor_Xd):
+            Campo_Virtual = self.ImagemCampo_px.copy()
+            self.Comando_DesenhaSeta(Campo_Virtual, P_X, P_Cor[:3],P_Cor[3:])
+            self.Comando_DesenhaCirculo(Campo_Virtual, P_Xd, Cor_Xd,raio=20)
+            Campo_Virtual = cv2.resize(Campo_Virtual, [640, 480])
+            return Campo_Virtual
+
+        """Classes initialization - Definindo o Robô"""
+        # Criando uma variável para representar o Robô
+
+        P = JOGADOR(0)
+
+        # Tempo de esperar para início do experimento/simulação
+        print('\nInício..............\n\n')
+        time.sleep(1)
+
+        # Definindo a Figura que irá rodar a simulação em uma threding
+        threading.Thread(target=Comando_VerTeste).start()
+
+        ''' Initial Position'''
+        # Xo = input('Digite a posição inicial do robô ([x y z psi]): ');
+        Xo = np.array([[0, 0, 0, 0]],dtype=np.float64).T
+        P.rSetPose(Xo)         # define pose do robô
+
+        ''' Variables initialization '''
+        #  Xa = P.pPos.X(1:6);    % postura anterior
+        data = []
+        Rastro_Xd = []
+        Rastro_X = []
+
+        #  Temporização
+        T = 60      # Periodo de cada volta da elipse
+        tsim = T  # Tempo total da simulação
+        tap = 0.100 # taxa de atualização do pioneer
+
+        t = tic()   # Tempo corrente
+        t_amos = tic() # tempo de amostragem
+
+
+        ''' Simulation'''
+
+        # Parâmetros da trajetória
+        w = (2*np.pi/T)
+        Rx = 300; #[m]
+        Ry = 300; #[m]
+
+        # Parâmetros de desempenho
+        IAE = 0
+        ITAE = 0
+        IASC = 0
+        
+        # Simulação em tempo real
+        while toc(t) < tsim:
+            if toc(t_amos) > tap:
+                t_amos = tic()
+                
+                # # Posicionamento Lemniscata
+                # if toc(t) > 48:
+                #     P.pPos.Xd[[0,1]] = np.array([[0],[0]])
+                # elif toc(t) > 36:
+                #     P.pPos.Xd[[0,1]] = np.array([[-375],[-400]])
+                # elif toc(t) > 24:
+                #     P.pPos.Xd[[0,1]] = np.array([[-375],[400]])
+                # elif toc(t) > 12:
+                #     P.pPos.Xd[[0,1]] = np.array([[375],[-400]])
+                # else:
+                #     P.pPos.Xd[[0,1]] = np.array([[375],[400]])
+                
+                # Trajetoria Eliptica:               
+                P.pPos.Xd[[0,1]] = np.array([[Rx*np.cos(w*toc(t))], [Ry*np.sin(w*toc(t))]])
+                P.pPos.Xd[[6,7]] = np.array([[-Rx*w*np.sin(w*toc(t))],[Ry*w*np.cos(w*toc(t))]])
+                
+                # Data aquisition
+                if self.Var_Comunicacao:
+                    P.pFlag.Connected = True
+                    self.Obter_DadosJogo()
+                    P.pPos.X[[0,1,5]] = np.expand_dims(self.Var_PosPart[:, 1], axis=1)
+                else:
+                    P.rGetSensorData()
+                
+                # -----------------------------------------------------
+                #P = Controladores(P,gains)
+                P = Ctrl_tgh(P,np.array([20,40,1]))
+                #P = Ctrl_inv(P,gains,1,0.41,0.17,0.01)
+                # P = Ctrl_exp(P,gains,2,0.06)
+                #P = Ctrl_gau(P,gains,1,0.41,0.04,2)
+                #P = Ctrl_sqrt(P,gains,0.98,2)
+                
+                # -----------------------------------------------------
+                if self.Var_Comunicacao:
+                    P.pFlag.Connected = True
+                    P.rSendControlSignals(self.pEsp)
+                    print(f'RPM: \n{P.pSC.RPM}')
+                else:
+                    P.simulationSend()
+
+                # Enviar sinais de controle para o robô
+                # print(f'Ponto de controle:\n{P.pPos.X[[0,1,5]]}')
+                print(f'Erro: \n{P.pPos.Xtil[[0,1,5]]}')
+                # print(f'Posição Atual Controlada: \n{P.pPos.X[[0,1,5]]}')
+                      
+                # if t>T:
+                #     ITAE = t*np.linalg.norm(P.pPos.Xtil[0:1])*tap
+                #     IAE = 0
+                #     IASC = 0
+                # else:
+                #     IASC = np.linalg.norm(P.pSC.Ud[0:1])*tap
+                #     IAE = np.linalg.norm(P.pPos.Xtil[0:1])*tap
+                #     ITAE = 0
+                
+                # # Verifica a saturação
+                # if (P.pSC.Ud[0]>0.75) or (P.pSC.Ud[1]>1.74):
+                #     print(f'Saturado: {P.pSC.Ud[0]} e {P.pSC.Ud[1]}')
+                #     break
+                
+                # salva variáveis para plotar no gráfico
+                # Rastro_Xd.append(P.pPos.Xd[0:1].T)  # formação desejada
+                # Rastro_X.append(P.pPos.X[0:1].T)    # formação real
+                
+                # data.append([P.pPos.Xd.T, P.pPos.X.T, P.pSC.Ud.T, P.pSC.U.T, P.pPos.rho, P.pPos.alpha, P.pPos.theta, IAE, ITAE, IASC, t])
+
+                # --------------------------------------------------------------- %                
+
+        #     # print(f'{P.pPos.X[[0,1,5]]} {P.pPos.Xd[[0,1,5]]}')
+        #     self.Comando_VisualizarTeste(P)
+
+
         
         self.Limpar_BarraDeStatus()
-        self.Atualizar_BarrraDeStatus("Teste mecânico iniciado")
-
-        self.Var_TesteMecanico = True
-        self.Obter_DadosJogo()
-        # Define os parâmetros do círculo
-        Rx = 250
-        Ry = 250
-        T = 30
-        simulacao = 0
-        w = 2*np.pi/T  # Frequência angular (em radianos)
-        elapsed_time = np.inf
-        StartCycle = time.time()      
-
-        while self.Var_TesteMecanico == True:
-            # Obtém o tempo decorrido desde o início do ciclo
-            elapsed_time = time.time() - StartCycle
-            self.InicioCiclo = time.time()
-            self.Obter_DadosJogo()
-            # Calcula a posição atual em coordenadas polares 
-            self.PosDesejada_P1 = np.array([[np.int64(-500 + Rx * math.cos(w*elapsed_time))],
-                                            [np.int64( 000 + Ry * math.sin(w*elapsed_time))],
-                                            [-np.pi/2 - w*elapsed_time]])
-            self.PosDesejada_P2 = np.array([[np.int64( 000 + Rx * math.cos(w*elapsed_time))],
-                                            [np.int64( 000 + Ry * math.sin(w*elapsed_time))],
-                                            [-np.pi/2 - w*elapsed_time]])
-            self.PosDesejada_P3 = np.array([[np.int64( 500 + Rx * math.cos(w*elapsed_time))],
-                                            [np.int64( 000 + Ry * math.sin(w*elapsed_time))],
-                                            [-np.pi/2 - w*elapsed_time]])
-            
-            if 2*T == int(elapsed_time):
-                self.Var_TesteMecanico = False
-
-            # if simulacao == 1:
-            Campo_Virtual = self.Comando_DesenhaTudo(self.PosDesejada_P1, self.Cor_Jog1, self.PosDesejada_P2, self.Cor_Jog2, self.PosDesejada_P3, self.Cor_Jog3,
-                                                    self.Posicao_Oponente_1, self.Posicao_Oponente_2, self.Posicao_Oponente_3, self.Cor_Opo, 
-                                                    self.Posicao_Bola, self.Cor_Bola)
-
-            cv2.imshow("Visão da Associação", Campo_Virtual)
-            cv2.waitKey(self.Var_FPS)  # Está em 25 milissegundos = 40 fps
-            if (cv2.getWindowProperty("Visão da Associação", cv2.WND_PROP_VISIBLE) < 1):
-                break
-            # else:
-            self.J1.rBDP_pPos_X[0:, 0] = self.Var_PosPart[0, 0:]
-            self.J1.rBDP_pPos_Xd[0:, 0] = self.PosDesejada_P1[0:,0]
-            self.J1.xtil()
-            self.J1.autonivel()
-            self.J1.baixonivel()
-
-            self.J2.rBDP_pPos_X[0:, 0] = self.Var_PosPart[1, 0:]
-            self.J2.rBDP_pPos_Xd[0:, 0] = self.Var_PosPart[6, 0]#self.PosDesejada_P2[0:,0]*-1
-            self.J2.xtil()
-            self.J2.autonivel()
-            self.J2.baixonivel()
-
-            self.J3.rBDP_pPos_X[0:, 0] = self.Var_PosPart[2, 0:]
-            self.J3.rBDP_pPos_Xd[0:, 0] = self.PosDesejada_P3[0:,0]
-            self.J3.xtil()
-            self.J3.autonivel()
-            self.J3.baixonivel()
-
-            self.Acao_Jogo()
-        
-        self.Limpar_BarraDeStatus()
-        self.Atualizar_BarrraDeStatus('Partida Encerrada')
+        self.Atualizar_BarrraDeStatus('Treino Encerrado')
     
     def Comando_Main(self):
         self.Limpar_BarraDeStatus()
@@ -808,6 +882,20 @@ class JanelaPDI(object):
 
         Campo_Virtual = cv2.resize(Campo_Virtual, [640, 480])
         return Campo_Virtual
+    
+    # def Comando_VisualizarTeste(self,P):
+    #         Campo_Virtual = self.Comando_DesenhaTeste(P.pPos.X[[0,1,5]], self.CorCamisa_BGR[0], P.pPos.Xd[[0,1,5]],[255,255,255])
+    #         cv2.imshow("Visao Teste", Campo_Virtual)
+    #         cv2.waitKey(self.Var_FPS) # Está em 25 milisegundos = 40 fps
+
+
+    # # Função para desenhar robôs do time e robôs adversários
+    # def Comando_DesenhaTeste(self, P_X, P_Cor, P_Xd, Cor_Xd):
+    #     Campo_Virtual = self.ImagemCampo_px.copy()
+    #     self.Comando_DesenhaSeta(Campo_Virtual, P_X, P_Cor[:3],P_Cor[3:])
+    #     self.Comando_DesenhaCirculo(Campo_Virtual, P_Xd, Cor_Xd)
+    #     Campo_Virtual = cv2.resize(Campo_Virtual, [640, 480])
+    #     return Campo_Virtual
 
     def Comando_DesenhaSeta(self, Campo_Virtual, Posicao, Cor1, Cor2, Comprimento = 80, espessura = 10,raio=40):
         X, Y, Orientacao_Radianos = Posicao[0], Posicao[1], Posicao[2]
