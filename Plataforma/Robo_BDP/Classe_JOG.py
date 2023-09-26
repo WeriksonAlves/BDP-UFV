@@ -22,6 +22,10 @@ class JOGADOR:
         # self.mCADload()
         self.mCADmake()
 
+        # self._Kinematicmodeling = np.array([[np.cos(self.pPos.X[5,0]), -self.pPar.a * np.sin(self.pPos.X[5,0] + self.pPar.alpha)],
+        #                                     [np.sin(self.pPos.X[5,0]),  self.pPar.a * np.cos(self.pPos.X[5,0] + self.pPar.alpha)],
+        #                                     [0, 1]])
+
     def iControlVariables(self):
         """
         Control variable initialization
@@ -56,10 +60,11 @@ class JOGADOR:
         ])
 
         # Current position
-        self.pPos.X[[0, 1, 5]] = self.pPos.X[[0, 1, 5]] + np.dot(K, self.pSC.U[[0, 1]]) * self.pPar.Ts
         # self.pPos.X[[0, 1, 5]] = self.pPos.Xd[[0, 1, 5]]
-
-
+        # print('Posição', self.pPos.X[[0, 1, 5]])
+        self.pPos.X[[0, 1, 5]] = self.pPos.X[[0, 1, 5]] + K @ self.pSC.U[[0, 1]] * self.pPar.Ts
+        # print('Mudança', K @ self.pSC.U[[0, 1]] * self.pPar.Ts)
+        
         # First-time derivative of the current position
         self.pPos.X[[6, 7, 11]] = np.dot(K, self.pSC.U[[0, 1]])
 
@@ -78,7 +83,7 @@ class JOGADOR:
                                                                   np.array([[self.pPar.a * np.cos(self.pPar.alpha)],
                                                                             [self.pPar.a * np.sin(self.pPar.alpha)],
                                                                             [0]]))
-
+        
     def sInvKinematicModel(self, dXr):
         """
         Calculate the robot velocity based on the reference velocity using the inverse kinematic model.
@@ -164,33 +169,17 @@ class JOGADOR:
         # Store past position
         self.pPos.Xa = self.pPos.X
 
-        if self.pFlag.Connected:
-            # MobileSim or Real BDP
-            # Robot pose from ARIA
-            self.pPos.Xc[0] = self.get_x()   # x
-            self.pPos.Xc[1] = self.get_y()   # y
-            self.pPos.Xc[5] = self.get_psi() #/ 180 * math.pi  # psi
-
-            # Robot velocities
-            self.pSC.Ua = self.pSC.U[:]
-            self.pSC.U[0] = self.get_vel()   # linear
-            self.pSC.U[1] = self.get_rotvel() #/ 180 * math.pi  # angular
-
-            K1 = np.array([[math.cos(self.pPos.Xc[5]), 0],
-                        [math.sin(self.pPos.Xc[5]), 0]])
-
-            K2 = np.array([[math.cos(self.pPos.Xc[5]), -self.pPar.a * math.sin(self.pPos.Xc[5])],
-                        [math.sin(self.pPos.Xc[5]), self.pPar.a * math.cos(self.pPos.Xc[5])]])
-
-            self.pPos.Xc[6:8] = np.dot(K1, self.pSC.U)
-            self.pPos.Xc[11] = self.pSC.U[1]
-
-            # Pose of the Control point
-            self.pPos.X[0:3] = self.pPos.Xc[0:3] + np.dot(np.array([self.pPar.a * math.cos(self.pPos.Xc[5]),
-                                                                    self.pPar.a * math.sin(self.pPos.Xc[5]), 0]), [1, 1, 1])
-            self.pPos.X[3:6] = self.pPos.Xc[3:6]
-            self.pPos.X[6:8] = np.dot(K2, self.pSC.U)
-            self.pPos.X[11] = self.pSC.U[1]
+        if self.pFlag.Connected: # Real BDP - Robot pose             
+            # Current position
+            self.pPos.X[[0, 1, 5]] = self.pPos.Xc[[0, 1, 5]] + np.dot(np.array([[np.cos(self.pPos.X[5,0]), -np.sin(self.pPos.X[5,0]), 0],
+                                                                                [np.sin(self.pPos.X[5,0]), np.cos(self.pPos.X[5,0]), 0],
+                                                                                [0, 0, 1]]), 
+                                                                    np.array([[self.pPar.a * np.cos(self.pPar.alpha)],
+                                                                                [self.pPar.a * np.sin(self.pPar.alpha)],
+                                                                                [0]]))
+            
+            # Robot velocities: First-time derivative of the current position
+            self.pPos.X[[6, 7, 11]] = (self.pPos.X[[0, 1, 5]] - self.pPos.Xa[[0, 1, 5]]) / self.pPar.Ts
 
         else:
             # Simulation
@@ -203,20 +192,21 @@ class JOGADOR:
         """
         Send control signals to the self.
         """
-        K2 = np.array([[1/2, 1/2], [1/self.pPar.d, -1/self.pPar.d]])
-        #  CRIAR: Normalizar valores entre -100 e 100%
+        if self.pFlag.Connected:
 
-        self.pSC.RPM = 1/self.pPar.r*(np.linalg.inv(K2)@self.pSC.Ud)
-        self.pSC.RPM = self.pSC.RPM*60/(2*np.pi) # Em RPM
+            K2 = self.pPar.r*np.array([[1/2, 1/2], [1/self.pPar.d, -1/self.pPar.d]])
+            #  CRIAR: Normalizar valores entre -100 e 100%
 
-        rpm_list = [int(self.pSC.RPM[1,0]),int(self.pSC.RPM[0,0])]
-        print(f'{rpm_list[0],rpm_list[1],self.pSC.Ud[0],self.pSC.Ud[1]}')
-        pEsp.write(self.__conver2byte(rpm_list))
+            self.pSC.RPM = (np.linalg.inv(K2)@self.pSC.Ud)
+            self.pSC.RPM = self.pSC.RPM*60/(2*np.pi) # Em RPM
 
-    def simulationSend(self):
-        self.pSC.U = self.pSC.Ud
-        self.sKinematicModel()
-
+            rpm_list = [int(self.pSC.RPM[0,0]),int(self.pSC.RPM[1,0])]
+            print(f'RPM (D-E): {rpm_list[0],rpm_list[1]}, Ud: {self.pSC.Ud.T}')
+            pEsp.write(self.__conver2byte(rpm_list))
+        else:
+            self.pSC.U = self.pSC.Ud
+            self.sKinematicModel()
+            
     def __conver2byte(self, elements:np.array) -> str : 
         string_empty = ''
         for value in elements:
@@ -368,17 +358,16 @@ class pPar:
         # self.m = 0.429  # 0.442;
 
         # [m and rad]
-        self.a = 32  # point of control
+        self.a = 32e-3  # point of control
         self.alpha = 0  # angle of control
-        self.r = 21.5 # Raio da roda
-        self.d = 75 # Larguda do robôs
+        self.r = 21.5e-3 # Raio da roda
+        self.d = 75e-3 # Larguda do robôs
 
-        # [Identified Parameters]
-        # Reference:
-        # Martins, F. N., & Brandão, A. S. (2018).
-        # Motion Control and Velocity-Based Dynamic Compensation for Mobile Robots.
-        # In Applications of Mobile Robots. IntechOpen.
-        # DOI: http://dx.doi.org/10.5772/intechopen.79397
+        # self.a = 32  # point of control
+        # self.alpha = 0  # angle of control
+        # self.r = 21.5 # Raio da roda
+        # self.d = 75 # Larguda do robôs
+
         # self.pPar.theta = [0.5338, 0.2168, -0.0134, 0.9560, -0.0843, 1.0590]
 
 class iFlags:

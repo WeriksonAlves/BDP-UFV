@@ -56,8 +56,9 @@ class JanelaPDI(object):
         self.ImagemCampo_px = cv2.imread(os.path.join(self.PastaAtual, 'Campo_px.png'))
         self.Var_PosPart = np.zeros((3,7), dtype=np.float64)
         self.Sai = False
+        self.Var_ConfigInfo = False
 
-        self.juiz = referee_class(HOST='192.168.0.106')
+        self.juiz = referee_class(HOST='192.168.0.101')
         threading.Thread(target=self.juiz.message).start()
         pg.init() # Inicializa a biblioteca pg
 
@@ -367,6 +368,7 @@ class JanelaPDI(object):
         self.J1 = MY_TEAM(self.Var_CorMinhaEquipe_BGR, self.CorCamisa_BGR[0][:3], self.Var_LadoAtaque, self.Var_J1_Funcao.current())
         self.J2 = MY_TEAM(self.Var_CorMinhaEquipe_BGR, self.CorCamisa_BGR[1][:3], self.Var_LadoAtaque, self.Var_J2_Funcao.current())
         self.J3 = MY_TEAM(self.Var_CorMinhaEquipe_BGR, self.CorCamisa_BGR[2][:3], self.Var_LadoAtaque, self.Var_J3_Funcao.current())
+        self.Var_ConfigInfo = True
         return Matriz
     
     # Procura e conecta o transmissor
@@ -392,7 +394,7 @@ class JanelaPDI(object):
                 while True:
                     t = time.time() - start
 
-                    self.pEsp.write(b'100,-100,100,-100,100,-100\n')
+                    self.pEsp.write(b'100,-100,100,-100,100,-100\n') #Direita esquerda
                     if t > tsim:
                         self.pEsp.write(b'0,0,0,0,0,0\n')
                         break
@@ -429,17 +431,11 @@ class JanelaPDI(object):
         def toc(t):
             return time.time() - t
         
-        def Comando_VerTeste():
-            while True:
-                Campo_Virtual = Comando_DesenhaTeste(P.pPos.X[[0,1,5]], self.CorCamisa_BGR[0], P.pPos.Xd[[0,1,5]],[255,255,255])
-                
-                cv2.imshow("Visao Associacao", Campo_Virtual)
-                cv2.waitKey(self.Var_FPS) # Está em 25 milisegundos = 40 fps
-                if (cv2.getWindowProperty("Visao Associacao", cv2.WND_PROP_VISIBLE) < 1):
-                    break
-        
         def Comando_DesenhaTeste(P_X, P_Cor, P_Xd, Cor_Xd):
             Campo_Virtual = self.ImagemCampo_px.copy()
+            # P_X[[0,1]] = P_X[[0,1]] * 1000
+            # P_Xd[[0,1]] = P_Xd[[0,1]] * 1000
+            # print(f'X= {P_X.T}')
             self.Comando_DesenhaSeta(Campo_Virtual, P_X, P_Cor[:3],P_Cor[3:])
             self.Comando_DesenhaCirculo(Campo_Virtual, P_Xd, Cor_Xd,raio=20)
             Campo_Virtual = cv2.resize(Campo_Virtual, [640, 480])
@@ -454,126 +450,97 @@ class JanelaPDI(object):
         print('\nInício..............\n\n')
         time.sleep(1)
 
-        # Definindo a Figura que irá rodar a simulação em uma threding
-        threading.Thread(target=Comando_VerTeste).start()
-
-        ''' Initial Position'''
-        # Xo = input('Digite a posição inicial do robô ([x y z psi]): ');
-        Xo = np.array([[0, 0, 0, 0]],dtype=np.float64).T
-        P.rSetPose(Xo)         # define pose do robô
-
         ''' Variables initialization '''
-        #  Xa = P.pPos.X(1:6);    % postura anterior
-        data = []
-        Rastro_Xd = []
-        Rastro_X = []
-
         #  Temporização
-        T = 60      # Periodo de cada volta da elipse
-        tsim = T  # Tempo total da simulação
+        T = 30      # Periodo de cada volta da elipse
+        tsim = 2*T    # Tempo total da simulação
         tap = 0.100 # taxa de atualização do pioneer
-
-        t = tic()   # Tempo corrente
-        t_amos = tic() # tempo de amostragem
-
+        t = tic()   # Tempo atual
+        tc = tic()  # Tempo de controle
+        tp = tic()  # Tempo para plotar
 
         ''' Simulation'''
 
         # Parâmetros da trajetória
         w = (2*np.pi/T)
-        Rx = 300; #[m]
-        Ry = 300; #[m]
-
-        # Parâmetros de desempenho
-        IAE = 0
-        ITAE = 0
-        IASC = 0
+        Rx = 0.3; #[m]
+        Ry = 0.3; #[m]
         
+        ''' Initial Position'''
+        # Xo = input('Digite a posição inicial do robô ([x y z psi]): ');
+        Xo = np.array([[0, 0, 0, 0]],dtype=np.float64).T
+        P.rSetPose(Xo)         # define pose do robô
+        P.pPos.Xd[[0,1]] = np.array([[Rx*np.cos(w*0)], [Ry*np.sin(w*0)]])
+        P.pPos.Xd[[5]] = np.arctan2(P.pPos.Xd[[1]],P.pPos.Xd[[0]])
+
         # Simulação em tempo real
-        while toc(t) < tsim:
-            if toc(t_amos) > tap:
-                t_amos = tic()
-                
-                # # Posicionamento Lemniscata
-                # if toc(t) > 48:
-                #     P.pPos.Xd[[0,1]] = np.array([[0],[0]])
-                # elif toc(t) > 36:
-                #     P.pPos.Xd[[0,1]] = np.array([[-375],[-400]])
-                # elif toc(t) > 24:
-                #     P.pPos.Xd[[0,1]] = np.array([[-375],[400]])
-                # elif toc(t) > 12:
-                #     P.pPos.Xd[[0,1]] = np.array([[375],[-400]])
-                # else:
-                #     P.pPos.Xd[[0,1]] = np.array([[375],[400]])
-                
-                # Trajetoria Eliptica:               
-                P.pPos.Xd[[0,1]] = np.array([[Rx*np.cos(w*toc(t))], [Ry*np.sin(w*toc(t))]])
-                P.pPos.Xd[[6,7]] = np.array([[-Rx*w*np.sin(w*toc(t))],[Ry*w*np.cos(w*toc(t))]])
-                
+        # threading.Thread(target=self.Obter_DadosJogo).start()
+        while toc(t) < tsim:                
+            if toc(tc) > tap:
+                tc = tic()
+                '-----------------------------------------------------'
                 # Data aquisition
                 if self.Var_Comunicacao:
-                    P.pFlag.Connected = True
-                    self.Obter_DadosJogo()
-                    P.pPos.X[[0,1,5]] = np.expand_dims(self.Var_PosPart[:, 1], axis=1)
+                    P.pFlag.Connected = True                    
+                    P.pPos.Xc[[0,1,5]] = self.Var_PosPart.T[[1]].T
+
+                P.rGetSensorData()
+
+                '-----------------------------------------------------'
+                # Posicionamento Lemniscata
+                if toc(t) > 48:
+                    P.pPos.Xd[[0,1]] = np.array([[0],[0]])
+                elif toc(t) > 36:
+                    P.pPos.Xd[[0,1]] = np.array([[-.375],[-.400]])
+                elif toc(t) > 24:
+                    P.pPos.Xd[[0,1]] = np.array([[-.375],[.400]])
+                elif toc(t) > 12:
+                    P.pPos.Xd[[0,1]] = np.array([[.375],[-.400]])
                 else:
-                    P.rGetSensorData()
+                    P.pPos.Xd[[0,1]] = np.array([[.375],[.400]])
                 
-                # -----------------------------------------------------
-                #P = Controladores(P,gains)
-                P = Ctrl_tgh(P,np.array([20,40,1]))
-                #P = Ctrl_inv(P,gains,1,0.41,0.17,0.01)
-                # P = Ctrl_exp(P,gains,2,0.06)
-                #P = Ctrl_gau(P,gains,1,0.41,0.04,2)
-                #P = Ctrl_sqrt(P,gains,0.98,2)
+                # # Trajetoria Eliptica:     
+                # XdA = P.pPos.Xd.copy()          
+                # P.pPos.Xd[[0,1]] = np.array([[Rx*np.cos(w*toc(t))], [Ry*np.sin(w*toc(t))]])
+                # P.pPos.Xd[[5]] = np.arctan2(P.pPos.Xd[[1]],P.pPos.Xd[[0]])
+                # # P.pPos.Xd[[6,7]] = np.array([[-Rx*w*np.sin(w*toc(t))],[Ry*w*np.cos(w*toc(t))]])
+                # # P.pPos.Xd[[11]] = (P.pPos.Xd[[5]] - P.pPos.Xa[[5]]) / tap
+                # P.pPos.Xd[[6,7,11]] = (P.pPos.Xd[[0,1,5]] - XdA[[0,1,5]])/tap
+                '-----------------------------------------------------'
+                P = Ctrl_tgh(P,np.array([.1,.1]))
                 
-                # -----------------------------------------------------
-                if self.Var_Comunicacao:
-                    P.pFlag.Connected = True
-                    P.rSendControlSignals(self.pEsp)
-                    print(f'RPM: \n{P.pSC.RPM}')
-                else:
-                    P.simulationSend()
-
-                # Enviar sinais de controle para o robô
-                # print(f'Ponto de controle:\n{P.pPos.X[[0,1,5]]}')
-                print(f'Erro: \n{P.pPos.Xtil[[0,1,5]]}')
-                # print(f'Posição Atual Controlada: \n{P.pPos.X[[0,1,5]]}')
-                      
-                # if t>T:
-                #     ITAE = t*np.linalg.norm(P.pPos.Xtil[0:1])*tap
-                #     IAE = 0
-                #     IASC = 0
-                # else:
-                #     IASC = np.linalg.norm(P.pSC.Ud[0:1])*tap
-                #     IAE = np.linalg.norm(P.pPos.Xtil[0:1])*tap
-                #     ITAE = 0
+                '-----------------------------------------------------'
+                if self.Var_Comunicacao: P.rSendControlSignals(self.pEsp)
+                else: P.rSendControlSignals(0)
                 
-                # # Verifica a saturação
-                # if (P.pSC.Ud[0]>0.75) or (P.pSC.Ud[1]>1.74):
-                #     print(f'Saturado: {P.pSC.Ud[0]} e {P.pSC.Ud[1]}')
-                #     break
-                
-                # salva variáveis para plotar no gráfico
-                # Rastro_Xd.append(P.pPos.Xd[0:1].T)  # formação desejada
-                # Rastro_X.append(P.pPos.X[0:1].T)    # formação real
-                
-                # data.append([P.pPos.Xd.T, P.pPos.X.T, P.pSC.Ud.T, P.pSC.U.T, P.pPos.rho, P.pPos.alpha, P.pPos.theta, IAE, ITAE, IASC, t])
-
-                # --------------------------------------------------------------- %                
-
-        #     # print(f'{P.pPos.X[[0,1,5]]} {P.pPos.Xd[[0,1,5]]}')
-        #     self.Comando_VisualizarTeste(P)
-
-
+            '-----------------------------------------------------'
+            
+            # Desenha o robo na tela   
+            if toc(tp) > tap:
+                tp = tic()
+                Campo_Virtual = Comando_DesenhaTeste(P.pPos.Xc[[0,1,5]], self.CorCamisa_BGR[0], P.pPos.Xd[[0,1,5]],[255,255,255])                    
+                cv2.imshow("Teste Mecanico", Campo_Virtual)
+                cv2.waitKey(self.Var_FPS) # Está em 25 milisegundos = 40 fps
+                if (cv2.getWindowProperty("Teste Mecanico", cv2.WND_PROP_VISIBLE) < 1):
+                    break              
         
+        #Destroi a imagem quando termina
+        if toc(t) >= tsim: cv2.destroyWindow('Teste Mecanico')
+
+        '-----------------------------------------------------'
+        #  Stop robot
+        P.pSC.Ud = np.array([[0],[0]])         # Zera velocidades do robô
+        if self.Var_Comunicacao: P.rSendControlSignals(self.pEsp)
+        else: P.rSendControlSignals(0)
+
         self.Limpar_BarraDeStatus()
         self.Atualizar_BarrraDeStatus('Treino Encerrado')
     
-    def Comando_Main(self):
-        self.Limpar_BarraDeStatus()
-        self.Atualizar_BarrraDeStatus("Partida Iniciada")
-        
+    def Comando_Main(self):        
         while True: 
+            if self.Var_ConfigInfo:
+                self.Obter_DadosJogo()
+
             if self.Sai == True:
                 print('Sai')
                 break
@@ -582,12 +549,10 @@ class JanelaPDI(object):
                 self.Var_Joystick = False
                 self.InicioCiclo = time.time()
 
-                self.Obter_DadosJogo()
-
                 self.J1.rBDP_pPos_X[0:, 0] = self.Var_PosPart[0:, 1]
                 self.J2.rBDP_pPos_X[0:, 0] = self.Var_PosPart[0:, 2]
                 self.J3.rBDP_pPos_X[0:, 0] = self.Var_PosPart[0:, 3]
-
+                
                 # self.J1.rBDP_pPos_Xd[0:, 0] = self.Var_PosPart[0:, 1]
                 # self.J2.rBDP_pPos_Xd[0:, 0] = self.Var_PosPart[0:, 2]
                 # self.J3.rBDP_pPos_Xd[0:, 0] = self.Var_PosPart[0:, 3]
@@ -627,8 +592,7 @@ class JanelaPDI(object):
 
                 while self.Var_Joystick == True:
                     self.Var_Jogando = False
-                    self.InicioCiclo = time.time()
-                    self.Obter_DadosJogo()
+                    self.InicioCiclo = time.time()                    
 
                     # Captura eventos dos joysticks
                     for event in pg.event.get():
@@ -654,6 +618,8 @@ class JanelaPDI(object):
         if self.Var_Joystick: return None
         print('Partida')
         self.Var_Jogando = True
+        self.Limpar_BarraDeStatus()
+        self.Atualizar_BarrraDeStatus("Partida Iniciada")
 
     def Comando_EncerrarPartida(self):
         self.Var_Jogando = False
@@ -697,7 +663,7 @@ class JanelaPDI(object):
         self.Cor_Jog3 = self.CorCamisa_BGR[2][0:]
         self.Cor_Opo = self.Var_CorEquipeAdversaria_BGR
         self.Cor_Bola = (0, 165, 255)
-
+        
         if(len(Ball_Pos) != 0): self.Var_PosPart[0:,0] = Ball_Pos[0:,0]
         if(len(P1_MyPos) != 0): self.Var_PosPart[0:,1] = P1_MyPos[0:,0]
         if(len(P2_MyPos) != 0): self.Var_PosPart[0:,2] = P2_MyPos[0:,0]
@@ -722,7 +688,7 @@ class JanelaPDI(object):
         Pos_Possivel, Area_Possivel = self.Comando_BuscarPosicaoCor(quadro,vetor_limites,AreaMinima,AreaMaxima)
         if len(Area_Possivel)>0:
             Id = np.argmax(Area_Possivel)
-            Posicao_Bola = np.concatenate((Pos_Possivel[Id], [[0]]), axis=0)
+            Posicao_Bola = np.concatenate((Pos_Possivel[Id]/1000, [[0]]), axis=0)
         
         return Posicao_Bola
 
@@ -766,21 +732,21 @@ class JanelaPDI(object):
         if len(Area_Possivel) > 0:
             Vector_Index = Area_Possivel.argsort()[-3:][::-1]
             for E in Vector_Index:
-                VectorFinal.append(np.concatenate((Pos_Possivel[E], [[0]]), axis=0))        
+                VectorFinal.append(np.concatenate((Pos_Possivel[E]/1000, [[0]]), axis=0))        
 
         if len(VectorFinal) == 3:
             return VectorFinal
         elif len(VectorFinal) == 2:
-            VectorFinal.append(np.array([[250], [685], [0]]))
+            VectorFinal.append(np.array([[.250], [.685], [0]]))
             return VectorFinal
         elif len(VectorFinal) == 1:
-            VectorFinal.append(np.array([[230], [685], [0]]))
-            VectorFinal.append(np.array([[250], [685], [0]]))
+            VectorFinal.append(np.array([[.230], [.685], [0]]))
+            VectorFinal.append(np.array([[.250], [.685], [0]]))
             return VectorFinal
         elif len(VectorFinal) == 0:
-            VectorFinal.append(np.array([[200], [685], [0]]))
-            VectorFinal.append(np.array([[250], [685], [0]]))
-            VectorFinal.append(np.array([[300], [685], [0]]))
+            VectorFinal.append(np.array([[.200], [.685], [0]]))
+            VectorFinal.append(np.array([[.250], [.685], [0]]))
+            VectorFinal.append(np.array([[.300], [.685], [0]]))
             return VectorFinal
 
     def Comando_CalcDistance(self,point1, point2):
@@ -818,8 +784,8 @@ class JanelaPDI(object):
             Pos, Dados = self.Comando_AssociarCores(VetorCorTime,Centroide_Cor)
             vetor_dif = Dados[0][:,1] - Dados[0][:,0] # Vetor que aponta do centroide das cores do jogador 1 para a cor do time
             angulo_rad = np.arctan2(vetor_dif[1], vetor_dif[0]) # Calcula o ângulo entre o vetor e o eixo X da imagem (em radianos)
-            Postura = np.array([[Pos[0][0][0]],[Pos[0][1][0]],[angulo_rad]])
-            # print("X: %4d, Y: %4d, Angº: %3.2f" %(Postura[0],Postura[1],np.rad2deg(Postura[2])))
+            Postura = np.array([[Pos[0][0][0]/1000],[Pos[0][1][0]/1000],[angulo_rad]])
+            # print("X: %.4f, Y: %.4f, Angº: %3.2f" %(Postura[0],Postura[1],np.rad2deg(Postura[2])))
         except:
             Postura = []
         return Postura
@@ -898,7 +864,7 @@ class JanelaPDI(object):
     #     return Campo_Virtual
 
     def Comando_DesenhaSeta(self, Campo_Virtual, Posicao, Cor1, Cor2, Comprimento = 80, espessura = 10,raio=40):
-        X, Y, Orientacao_Radianos = Posicao[0], Posicao[1], Posicao[2]
+        X, Y, Orientacao_Radianos = Posicao[0]*1000, Posicao[1]*1000, Posicao[2]
         X = int(X + 900)
         Y = int(Y + 750)
         end_point = (int(X + Comprimento * np.cos(Orientacao_Radianos)), int(Y + Comprimento * np.sin(Orientacao_Radianos)))
@@ -907,11 +873,11 @@ class JanelaPDI(object):
         cv2.circle(Campo_Virtual, (X, Y), raio, Cor2,espessura)  # O valor -1 preenche o círculo
 
     def Comando_DesenhaCirculo(self, Campo_Virtual, Posicao, Cor,espessura = 10, raio = 40):
-        X, Y = int(Posicao[0] + 900), int(Posicao[1] + 750)        
+        X, Y = int(Posicao[0]*1000 + 900), int(Posicao[1]*1000 + 750)        
         cv2.circle(Campo_Virtual, (X, Y), raio, Cor, espessura)  # O valor -1 preenche o círculo
 
     def Comando_DesenhaBola(self, Campo_Virtual, Posicao, Cor, raio = 21):
-        X, Y = int(Posicao[0] + 900), int(Posicao[1] + 750)        
+        X, Y = int(Posicao[0]*1000 + 900), int(Posicao[1]*1000 + 750)        
         cv2.circle(Campo_Virtual, (X, Y), raio, Cor, -1)  # O valor -1 preenche o círculo
     
     def __conver2byte(self, elements:np.array) -> str : 
