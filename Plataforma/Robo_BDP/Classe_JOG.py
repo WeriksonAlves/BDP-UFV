@@ -3,7 +3,7 @@ import math
 from matplotlib.patches import Polygon
 import matplotlib.pyplot as plt
 
-class JOGADOR:
+class Player:
     def __init__(self, ID=0):
         # Properties or Parameters
         self.pCAD = None  # Pioneer 3DX 3D image
@@ -160,7 +160,7 @@ class JOGADOR:
         if self.pFlag.Connected:
             # The position is given in millimeters and
             # the heading in degrees
-            self.set_pose(self.pPos.Xc[0] , self.pPos.Xc[1], self.pPos.Xc[5])
+            self.set_pose(self.pPos.Xc[0,0] , self.pPos.Xc[1,0], self.pPos.Xc[5,0])
 
     def rGetSensorData(self):
         """
@@ -171,7 +171,7 @@ class JOGADOR:
 
         if self.pFlag.Connected: # Real BDP - Robot pose             
             # Current position
-            self.pPos.X[[0, 1, 5]] = self.pPos.Xc[[0, 1, 5]] + np.dot(np.array([[np.cos(self.pPos.X[5,0]), -np.sin(self.pPos.X[5,0]), 0],
+            self.pPos.Xc[[0, 1, 5]] = self.pPos.X[[0, 1, 5]] - np.dot(np.array([[np.cos(self.pPos.X[5,0]), -np.sin(self.pPos.X[5,0]), 0],
                                                                                 [np.sin(self.pPos.X[5,0]), np.cos(self.pPos.X[5,0]), 0],
                                                                                 [0, 0, 1]]), 
                                                                     np.array([[self.pPar.a * np.cos(self.pPar.alpha)],
@@ -188,21 +188,16 @@ class JOGADOR:
                                                                          [self.pPar.a * math.sin(self.pPos.X[5,0])],
                                                                          [0]])
 
-    def rSendControlSignals(self,pEsp):
+    def rSendControlSignals(self):
         """
         Send control signals to the self.
         """
         if self.pFlag.Connected:
-
             K2 = self.pPar.r*np.array([[1/2, 1/2], [1/self.pPar.d, -1/self.pPar.d]])
             #  CRIAR: Normalizar valores entre -100 e 100%
 
             self.pSC.RPM = (np.linalg.inv(K2)@self.pSC.Ud)
             self.pSC.RPM = self.pSC.RPM*60/(2*np.pi) # Em RPM
-
-            rpm_list = [int(self.pSC.RPM[0,0]),int(self.pSC.RPM[1,0])]
-            print(f'RPM (D-E): {rpm_list[0],rpm_list[1]}, Ud: {self.pSC.Ud.T}')
-            pEsp.write(self.__conver2byte(rpm_list))
         else:
             self.pSC.U = self.pSC.Ud
             self.sKinematicModel()
@@ -242,10 +237,10 @@ class JOGADOR:
         # Definir a velocidade angular por p.pSC.U(2)
         self.pSC.U[1] = rotvel
 
-    def set_pose(self, pose):
+    def set_pose(self, x,y,ang):
         # Transformação Homogênea:
-        trans_matrix = np.array([[np.cos(pose[2]), (-1) * np.sin(pose[2]), 0, pose[0]],
-                                 [np.sin(pose[2]), np.cos(pose[2]), 0, pose[1]],
+        trans_matrix = np.array([[np.cos(ang), (-1) * np.sin(ang), 0, x],
+                                 [np.sin(ang), np.cos(ang), 0, y],
                                  [0, 0, 1, 0],
                                  [0, 0, 0, 1]])
 
@@ -348,7 +343,7 @@ class pPar:
         self.Model = 'BDPJOG'  # robot model
 
         # Sample time
-        self.Ts = 0.1  # For numerical integration
+        self.Ts = 0.04  # For numerical integration
         self.ti = None  # Flag time
 
         # Dynamic Model Parameters
