@@ -46,22 +46,22 @@ def Comando_DesenhaCirculo(Campo_Virtual, Posicao, Cor,espessura = 10, raio = 40
 # P = Player(0)
 
 # Simulação em tempo real
-for Linear in range(50,10,-1):#(20,1,-1): #Gx: 1.9, Gy: 1.3, Gp: 0.2
-    Lin = Linear/10
-    for Angular in range(50,1,-1):#(20,1,-1):
-        Ang = Angular/10
-        for Interno1 in range(50,1,-2):#(30,1,-1):
+for Linear in range(100,0,-10):#(20,1,-1): #Gx: 1.9, Gy: 1.3, Gp: 0.2
+    Lin = Linear/100
+    for Angular in range(100,0,-10):#(20,1,-1):
+        Ang = Angular/100
+        for Interno1 in range(100,0,-10):#(30,1,-1):
             In1 = Interno1/100
-            for Interno2 in range(50,1,-2):#(30,1,-1):
+            for Interno2 in range(100,0,-10):#(30,1,-1):
                 In2 = Interno2/100
-
+        
                 """Classes initialization - Definindo o Robô"""
                 P = Player(0) # Criando uma variável para representar o Robô
 
                 ''' Initial Position'''
                 # Xo = input('Digite a posição inicial do robô ([x y z psi]): ');
-                # Xo = np.array([[0, 0, 0, 0]],dtype=np.float64).T
-                # P.rSetPose(Xo)         # define pose do robô
+                Xo = np.array([[0, 0, 0, 0]],dtype=np.float64).T
+                P.rSetPose(Xo)         # define pose do robô
 
                 ''' Variables initialization '''
                 data = []
@@ -104,7 +104,7 @@ for Linear in range(50,10,-1):#(20,1,-1): #Gx: 1.9, Gy: 1.3, Gp: 0.2
                     t = taux/10
                     # while toc(t) < tsim:                
                     #     if toc(tc) > tap:
-                    #         tc = tic()
+                        # tc = tic()
 
                     '-----------------------------------------------------'
                     # Data aquisition
@@ -125,21 +125,28 @@ for Linear in range(50,10,-1):#(20,1,-1): #Gx: 1.9, Gy: 1.3, Gp: 0.2
                     P.rSendControlSignals()
                     
                     '-----------------------------------------------------'
-                
-                    # Verifica o erro
-                    if (t <= T/2) and (np.linalg.norm(P.pPos.Xtil[[0,1]]) <= Erro_mim):
-                        print(f'Ganho encontrado: Lin: {Lin}, Ang: {Ang}, Int1: {In1}, Int2: {In2}')
-                        Fim_simu = 1
+                    # Verifica a saturação
+                    if (abs(P.pSC.Ud[0,0])>0.8) or (abs(P.pSC.Ud[1,0])>18):
+                        print('Lin: %.3f, Ang: %.3f, Int1: %.3f, Int2: %.3f' %(Lin,Ang,In1,In2), f' ==> Saturado l a: {P.pSC.Ud.T}' )
+                        break
+
+                    if (abs(P.pSC.RPM[[0]])>500) or (abs(P.pSC.RPM[[1]])>500):
+                        print('Lin: %.3f, Ang: %.3f, Int1: %.3f, Int2: %.3f' %(Lin,Ang,In1,In2), f' ==> Saturado rpm: {P.pSC.RPM.T}' )
                         break
                     
+                    # Verifica o erro
                     if (t > T/2) and (np.linalg.norm(P.pPos.Xtil[[0,1]]) > Erro_mim):
                         print('Lin: %.3f, Ang: %.3f, Int1: %.3f, Int2: %.3f' %(Lin,Ang,In1,In2), f' ==> Erro Atual: {np.linalg.norm(P.pPos.Xtil[[0,1]])}')
                         break
-
-                    # Verifica a saturação
-                    if (abs(P.pSC.RPM[[0]])>600) or (abs(P.pSC.RPM[[1]])>600):
-                        print('Lin: %.3f, Ang: %.3f, Int1: %.3f, Int2: %.3f' %(Lin,Ang,In1,In2), f' ==> Saturado: {P.pSC.RPM.T}' )
+                    
+                    if (t <= T/2) and (np.linalg.norm(P.pPos.Xtil[[0,1]]) <= Erro_mim):
+                        print(f'Ganho encontrado: Lin: {Lin}, Ang: {Ang}, Int1: {In1}, Int2: {In2}, RPM: {P.pSC.RPM.T}')
+                        Fim_simu = 1
                         break
+                    
+                    
+
+                    
                     '-----------------------------------------------------'
                     if t>T:
                         ITAE = t*np.linalg.norm(P.pPos.Xtil[0:1])*tap
@@ -156,18 +163,18 @@ for Linear in range(50,10,-1):#(20,1,-1): #Gx: 1.9, Gy: 1.3, Gp: 0.2
                     Rastro_X.append(P.pPos.X.T[0][[0,1]])    # formação real
                     data.append([P.pPos.Xd.T, P.pPos.X.T, P.pSC.Ud.T, P.pSC.U.T, IAE, ITAE, IASC, t])
 
-                #     '-----------------------------------------------------'
-                #     # Desenha o robo na tela
-                #     # if toc(tp) > tap:
-                #     #     tp = tic()
-                #     Campo_Virtual = Comando_DesenhaTeste(P.pPos.Xc[[0,1,5]], [0,255,0,0,255,0], P.pPos.Xd[[0,1,5]],[255,255,255])                    
-                #     cv2.imshow("Teste Mecanico", Campo_Virtual)
-                #     cv2.waitKey(25) # Está em 25 milisegundos = 40 fps             
-                #     if (cv2.getWindowProperty("Teste Mecanico", cv2.WND_PROP_VISIBLE) < 1):
-                #         break              
+                    '-----------------------------------------------------'
+                    # Desenha o robo na tela
+                    # if toc(tp) > tap:
+                    #     tp = tic()
+                    Campo_Virtual = Comando_DesenhaTeste(P.pPos.Xc[[0,1,5]], [0,255,0,0,255,0], P.pPos.Xd[[0,1,5]],[255,255,255])                    
+                    cv2.imshow("Teste Mecanico", Campo_Virtual)
+                    cv2.waitKey(25) # Está em 25 milisegundos = 40 fps             
+                    if (cv2.getWindowProperty("Teste Mecanico", cv2.WND_PROP_VISIBLE) < 1):
+                        break              
 
-                # #Destroi a imagem quando termina
-                # if t >= tsim: cv2.destroyWindow('Teste Mecanico')
+                #Destroi a imagem quando termina
+                if t >= tsim: cv2.destroyWindow('Teste Mecanico')
 
                 if Fim_simu == 1:
                     print('Terminpu a simulação')

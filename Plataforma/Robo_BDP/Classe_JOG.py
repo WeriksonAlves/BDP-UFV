@@ -192,6 +192,12 @@ class Player:
         """
         Send control signals to the self.
         """
+        K2 = self.pPar.r*np.array([[1/2, 1/2], [1/self.pPar.d, -1/self.pPar.d]])
+        #  CRIAR: Normalizar valores entre -100 e 100%
+
+        self.pSC.RPM = (np.linalg.inv(K2)@self.pSC.Ud)
+        self.pSC.RPM = self.pSC.RPM*60/(2*np.pi) # Em RPM
+
         if self.pFlag.Connected:
             K2 = self.pPar.r*np.array([[1/2, 1/2], [1/self.pPar.d, -1/self.pPar.d]])
             #  CRIAR: Normalizar valores entre -100 e 100%
@@ -297,6 +303,83 @@ class Player:
     def mCADcolor(self, color):
         self.shape.set_color(color)
 
+class Ball:
+    def __init__(self):
+        # Properties or Parameters
+        self.pCAD = None  # Pioneer 3DX 3D image
+
+        # Navigation Data and Communication
+        self.pData = None  # Flight Data
+        self.pCom = None   # Communication
+
+        # Initialize control variables, parameters, and flags
+        self.iControlVariables()
+        self.iParameters()
+        self.iFlags()
+
+    def iControlVariables(self):
+        """
+        Control variable initialization
+        """
+        self.pPos = pPos()
+        self.pSC = pSC()
+
+    def iParameters(self):
+        """
+        Parameter initialization
+        """
+        self.pPar = pPar()
+        self.pPar.a = 0  # point of control
+        self.pPar.alpha = 0  # angle of control
+        self.pPar.r = 21.25e-3 # Raio da roda
+        self.pPar.d = 21.25e-3 # Larguda do robôs
+
+    def iFlags(self):
+        """
+        Flag initialization
+        """
+        self.pFlag = iFlags()
+        
+    def bGetSensorData(self):
+        """
+        Get sensor data and update ball pose.
+        """
+        # Store past position
+        self.pPos.Xa = self.pPos.X
+
+        if self.pFlag.Connected: 
+            # Current position
+            self.pPos.Xc[[0, 1, 5]] = self.pPos.X[[0, 1, 5]] - np.dot(np.array([[np.cos(self.pPos.X[5,0]), -np.sin(self.pPos.X[5,0]), 0],
+                                                                                [np.sin(self.pPos.X[5,0]), np.cos(self.pPos.X[5,0]), 0],
+                                                                                [0, 0, 1]]), 
+                                                                    np.array([[self.pPar.a * np.cos(self.pPar.alpha)],
+                                                                                [self.pPar.a * np.sin(self.pPar.alpha)],
+                                                                                [0]]))
+            
+            # ball velocities: First-time derivative of the current position
+            self.pPos.X[[6, 7, 11]] = (self.pPos.X[[0, 1, 5]] - self.pPos.Xa[[0, 1, 5]]) / self.pPar.Ts
+
+        else:
+            # Simulation ball center position
+            self.pPos.Xc[[0, 1, 5]] = self.pPos.X[[0, 1, 5]] - np.array([[self.pPar.a * math.cos(self.pPos.X[5,0])],
+                                                                         [self.pPar.a * math.sin(self.pPos.X[5,0])],
+                                                                         [0]])
+
+    def get_vel_linang(self, current, past, t_amo):
+        '''
+        Calculate vel lin and ang => [6,7,11]
+
+        In:
+            current: self.pPos.Xd[[1,2,5]]
+            past: self.pPos.Xda[[1,2,5]]
+        
+        Out: self.pPos.Xd[[6,7,11]]
+        '''
+        return (current - past)/t_amo
+
+
+
+
 
 class pPos:
     def __init__(self):
@@ -358,8 +441,8 @@ class pPar:
         self.r = 21.5e-3 # Raio da roda
         self.d = 75e-3 # Larguda do robôs
 
-        # self.a = 32  # point of control
-        # self.alpha = 0  # angle of control
+        self.vmax = 1.051  # 
+        self.wmax = 26 
         # self.r = 21.5 # Raio da roda
         # self.d = 75 # Larguda do robôs
 
