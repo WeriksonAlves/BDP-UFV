@@ -28,18 +28,17 @@ class referee_class(object):
     def read(self, msg,color):
         #retorna as variáveis para False quando o jogo reinicia
         try:
-            if self.play_ant == False and bool(msg['foul'] == 'GAME_ON') == True:
+            if bool(msg['foul'] == 'GAME_ON') == True:
                 self.penalty, self.freeball, self.goalkick, self.kickoff, self.favorable, self.halt = False, False, False, False, False, False
             self.play = bool(msg['foul'] == 'GAME_ON')
-            self.play_ant = self.play
             #verifica se a marcação foi a favor ou contra
             if 'teamcolor' in msg and bool(msg['teamcolor'] == color): self.favorable = True
             #verifica o quadrante da marcação
             if 'foulQuadrant' in msg: self.quadrante = msg['foulQuadrant'][-1]
             #verifica qual das marcações ocorreu
-            if bool(msg['foul'] == 'FREE_BALL'): self.freeball = True
-            if bool(msg['foul'] == 'PENALTY_KICK'): self.penalty = True
-            if bool(msg['foul'] == 'KICKOFF'): self.kickoff = True
-            if bool(msg['foul'] == 'GOAL_KICK'): self.goalkick = True
-            if bool(msg['foul'] == 'HALT'): self.halt = True
+            if bool(msg['foul'] == 'FREE_BALL'): self.freeball, self.play = True, True
+            if bool(msg['foul'] == 'PENALTY_KICK'): self.penalty, self.play = True, True
+            if bool(msg['foul'] == 'KICKOFF'): self.kickoff, self.play = True, True
+            if bool(msg['foul'] == 'GOAL_KICK'): self.goalkick, self.play = True, True
+            if bool(msg['foul'] == 'HALT'): self.halt, self.play = True, False
         except:pass

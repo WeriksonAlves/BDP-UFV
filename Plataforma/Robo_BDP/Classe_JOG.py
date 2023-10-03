@@ -4,10 +4,12 @@ from matplotlib.patches import Polygon
 import matplotlib.pyplot as plt
 
 class Player:
-    def __init__(self, ID=0):
+    def __init__(self, ID=0, LadoAtaque=0, Funcao=0):
         # Properties or Parameters
         self.pCAD = None  # Pioneer 3DX 3D image
         self.pID = ID     # Identification
+        self.LadoAtaque = LadoAtaque
+        self.Funcao = Funcao
 
         # Navigation Data and Communication
         self.pData = None  # Flight Data
@@ -167,11 +169,11 @@ class Player:
         Get sensor data and update robot pose.
         """
         # Store past position
-        self.pPos.Xa = self.pPos.X
+        self.pPos.Xa = self.pPos.X.copy()
 
         if self.pFlag.Connected: # Real BDP - Robot pose             
             # Current position
-            self.pPos.Xc[[0, 1, 5]] = self.pPos.X[[0, 1, 5]] - np.dot(np.array([[np.cos(self.pPos.X[5,0]), -np.sin(self.pPos.X[5,0]), 0],
+            self.pPos.X[[0, 1, 5]] = self.pPos.Xc[[0, 1, 5]] + np.dot(np.array([[np.cos(self.pPos.X[5,0]), -np.sin(self.pPos.X[5,0]), 0],
                                                                                 [np.sin(self.pPos.X[5,0]), np.cos(self.pPos.X[5,0]), 0],
                                                                                 [0, 0, 1]]), 
                                                                     np.array([[self.pPar.a * np.cos(self.pPar.alpha)],
@@ -184,7 +186,7 @@ class Player:
         else:
             # Simulation
             # Robot center position
-            self.pPos.Xc[[0, 1, 5]] = self.pPos.X[[0, 1, 5]] - np.array([[self.pPar.a * math.cos(self.pPos.X[5,0])],
+            self.pPos.X[[0, 1, 5]] = self.pPos.Xc[[0, 1, 5]] + np.array([[self.pPar.a * math.cos(self.pPos.X[5,0])],
                                                                          [self.pPar.a * math.sin(self.pPos.X[5,0])],
                                                                          [0]])
 
@@ -263,13 +265,7 @@ class Player:
     def Draw(self, fig, axis):
         grid_1 = fig.add_subplot()
         grid_1.add_patch(self.shape)
-        
 
-    # # Load CAD
-    # def mCADload(self):
-    #     # Implement this method as needed
-    #     pass
-    #
     # Make CAD
     def mCADmake(self):
         # Simulation:
@@ -284,24 +280,18 @@ class Player:
                                 [ 0.04, -0.04]])
 
         self.shape = Polygon(self.square_points, closed=False)
-    #
-    # # Plot CAD
-    # def mCADplot(self):
-    #     # Implement this method as needed
-    #     pass
-    #
-    # # Delete CAD
-    # def mCADdel(self):
-    #     # Implement this method as needed
-    #     pass
-    #
-    # Plot 2D CAD
-    # def mCADplot2D(self, fig):
-    #     pass
-    #
+    
     # Set CAD color
     def mCADcolor(self, color):
         self.shape.set_color(color)
+
+    def ExecutarAcao(self):
+        if self.Funcao == 0:
+            print(f'Goleiro {self.Funcao}')
+        elif self.Funcao == 1:
+            print(f'Defensor {self.Funcao}')
+        elif self.Funcao == 2:
+            print(f'Atacante {self.Funcao}')
 
 class Ball:
     def __init__(self):
@@ -345,25 +335,18 @@ class Ball:
         Get sensor data and update ball pose.
         """
         # Store past position
-        self.pPos.Xa = self.pPos.X
+        self.pPos.Xa = self.pPos.X.copy()
 
-        if self.pFlag.Connected: 
-            # Current position
-            self.pPos.Xc[[0, 1, 5]] = self.pPos.X[[0, 1, 5]] - np.dot(np.array([[np.cos(self.pPos.X[5,0]), -np.sin(self.pPos.X[5,0]), 0],
-                                                                                [np.sin(self.pPos.X[5,0]), np.cos(self.pPos.X[5,0]), 0],
-                                                                                [0, 0, 1]]), 
-                                                                    np.array([[self.pPar.a * np.cos(self.pPar.alpha)],
-                                                                                [self.pPar.a * np.sin(self.pPar.alpha)],
-                                                                                [0]]))
-            
-            # ball velocities: First-time derivative of the current position
-            self.pPos.X[[6, 7, 11]] = (self.pPos.X[[0, 1, 5]] - self.pPos.Xa[[0, 1, 5]]) / self.pPar.Ts
-
-        else:
-            # Simulation ball center position
-            self.pPos.Xc[[0, 1, 5]] = self.pPos.X[[0, 1, 5]] - np.array([[self.pPar.a * math.cos(self.pPos.X[5,0])],
-                                                                         [self.pPar.a * math.sin(self.pPos.X[5,0])],
-                                                                         [0]])
+        # Current position
+        self.pPos.X[[0, 1, 5]] = self.pPos.Xc[[0, 1, 5]] + np.dot(np.array([[np.cos(self.pPos.X[5,0]), -np.sin(self.pPos.X[5,0]), 0],
+                                                                            [np.sin(self.pPos.X[5,0]), np.cos(self.pPos.X[5,0]), 0],
+                                                                            [0, 0, 1]]), 
+                                                                np.array([[self.pPar.a * np.cos(self.pPar.alpha)],
+                                                                            [self.pPar.a * np.sin(self.pPar.alpha)],
+                                                                            [0]]))
+        
+        # ball velocities: First-time derivative of the current position
+        self.pPos.X[[6, 7, 11]] = (self.pPos.X[[0, 1, 5]] - self.pPos.Xa[[0, 1, 5]]) / self.pPar.Ts
 
     def get_vel_linang(self, current, past, t_amo):
         '''

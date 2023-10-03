@@ -1,5 +1,38 @@
 import numpy as np
 
+def ctrl_rbin(P,gain = [.1,.1,.1,.1]):
+    """
+    Controle de posição baseado em CV
+    """
+    Kpt = gain[0]
+    Kdt = gain[1]
+    Kpv = gain[2]
+    Kdv = gain[3]
+
+    # Instantaneous Error:
+    Xda = P.pPos.Xtil.copy()
+    P.pPos.Xtil = (P.pPos.Xd - P.pPos.X)
+    
+    Et = -P.pPos.X[5,0]
+    Etant = -Xda[5,0]
+
+    for ii in range(3, 6):
+        if abs(P.pPos.Xtil[ii]) > np.pi:
+            if P.pPos.Xtil[ii] < 0:
+                P.pPos.Xtil[ii] = P.pPos.Xtil[ii] + 2 * np.pi
+            else:
+                P.pPos.Xtil[ii] = P.pPos.Xtil[ii] - 2 * np.pi
+
+    w = Kpt*P.pPos.X[5,0] + Kdt*(Et - Etant)
+    Dant = np.sqrt(Xda[0,0]**2 + Xda[1,0]**2)
+    D = np.sqrt(P.pPos.X[0,0]**2 + P.pPos.X[1,0]**2)
+    Vel = np.sqrt(P.pPos.X[6,0]**2 + P.pPos.X[7,0]**2)
+    v = Kpv* (-Vel) + Kdv *(D - Dant)
+
+    P.pSC.Ud[0,0] = v
+    P.pSC.Ud[1,0] = w
+
+
 # class Controls:
 def Ctrl_tgh(P, gains1 = [0.4,0.4]): 
     """ 
