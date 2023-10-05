@@ -32,9 +32,9 @@ def ctrl_rbin(P,gain = [0.2,0,.5,0]):
     Vel = np.sqrt(P.pPos.X[6,0]**2 + P.pPos.X[7,0]**2)
     v = Kpv* (-Vel) + Kdv *(D - Dant)
 
-    P.pSC.Ud.dtype = np.float64
-    P.pSC.Ud[[0]] = vmax * np.tanh(v)
-    P.pSC.Ud[[1]] = wmax * np.tanh(w)
+    # P.pSC.Ud.dtype = np.float64
+    P.pSC.Ud[[0]] = np.float64(vmax * np.tanh(v))
+    P.pSC.Ud[[1]] = np.float64(wmax * np.tanh(w))
 
     return P
 
@@ -305,6 +305,55 @@ def f5(P, B, gain=[.15, .15, .05]):
 
     v = Vx * np.cos(psi) + Vy * np.sin(psi) + Vpsi * a * np.sin(alpha)
     w = Vpsi
+
+    P.pSC.Ud[0, 0] = v
+    P.pSC.Ud[1, 0] = w
+
+    return P
+
+def autonomos_pos(P, P2, gain = [1.5, .07]):
+    vmax = P.pPar.vmax
+    wmax = P.pPar.wmax
+
+
+    k1 = gain[0]
+    k2 = gain[1]
+    krepulsive = 0
+
+    xr = P.pPos.X[0,0]
+    yr = P.pPos.X[1,0]
+    yaw_r = P.pPos.X[5,0]
+    vxr = P.pPos.X[6, 0]
+    vyr = P.pPos.X[7, 0]
+
+    x_partener = P2.pPos.X[0, 0]
+    y_partener = P2.pPos.X[1, 0]
+
+    xd = P.pPos.Xd[0,0]  
+    yd =  P.pPos.Xd[1,0] 
+
+    phi = np.arctan2(yd - yr, xd - xr)
+    alpha = normalizeAngle(- phi + yaw_r)
+
+    if alpha > np.pi/2:
+        k1 *= -1
+        krepulsive *= -1
+        alpha -= np.pi
+    elif alpha < -np.pi/2:
+        k1 *= -1
+        krepulsive *= -1
+        alpha += np.pi
+
+    rho = np.sqrt((xd-xr) ** 2 + (yd-yr) ** 2)
+    if rho == 0:
+        drho = 0
+    else:
+        drho = ((xd - xr) * (0 - vxr) + (yd - yr) * (0 - vyr)) / rho
+
+    rho_partener = np.sqrt((x_partener - xr)**2 + (y_partener - yr)**2)
+
+    v = vmax * np.tanh(k1 * rho) + drho * 0.1 -  0.05 * krepulsive / rho_partener
+    w = wmax * alpha * k2
 
     P.pSC.Ud[0, 0] = v
     P.pSC.Ud[1, 0] = w
