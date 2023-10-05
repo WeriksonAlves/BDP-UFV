@@ -231,9 +231,10 @@ def Attacker4(P, gain = [1, .1]):
    
    return P
 
-def Attacker5(P, B, gain = [1, .1]):
+def Attacker5(P, B, gain = [1.5, .07]):
    vmax = P.pPar.vmax
    wmax = P.pPar.wmax
+   c = 5e-2
 
    k1 = gain[0]
    k2 = gain[1]
@@ -253,6 +254,11 @@ def Attacker5(P, B, gain = [1, .1]):
    phi = np.arctan2(yball - yr, xball - xr)
    alpha = normalizeAngle(- phi + yaw_r)
 
+    # Setando a posição desejado como uma posição ficticia atrás da bola,
+    # porém com o mesmo angulo entre a bola e o centro do gol do adversário
+   xd = xball - c if abs(xball - c) < 0.7 else xball
+   yd = yball + c * np.sin(phi) if abs(yball + c * np.sin(phi)) < 0.6 else yball 
+
 
    if alpha > np.pi/2:
       k1 *= -1
@@ -263,22 +269,110 @@ def Attacker5(P, B, gain = [1, .1]):
 
    rho = np.sqrt((xball-xr)**2 + (yball-yr)**2)
    drho = ((xball - xr) * (vxball - vxr) + (yball - yr) * (vyball - vyr)) / rho
-#    print('drho: %.5f, vxball: %.5f, vxr: %.5f' %(drho,vxball,vxr))
    
    v = vmax * np.tanh(k1 * rho) + drho * 0.1
    w = wmax * alpha * k2
 
    P.pSC.Ud[0, 0] = v
    P.pSC.Ud[1, 0] = w
+
+
+   if rho < 7/100:
+    P.pSC.Ud[0, 0] = 0
+    if np.abs(phi) < np.pi/2:
+        if phi < 0:
+            P.pSC.Ud[1, 0] = wmax
+        else:
+            P.pSC.Ud[1, 0] = -wmax
+    else:
+        if phi < 0:
+            P.pSC.Ud[1, 0] = wmax
+        else:
+            P.pSC.Ud[1, 0] = -wmax    
+
    
    return P
 
-def Attacker6(P, P2, B, gain = [1, .1]):
+def Attacker6(P, P2, B, gain = [1.5, .07]):
+   vmax = P.pPar.vmax
+   wmax = P.pPar.wmax
+   c = 5e-2
+
+   k1 = gain[0]
+   k2 = gain[1]
+   krepulsive = k1
+
+   xball = B.pPos.X[0,0]
+   yball = B.pPos.X[1,0]
+   vxball = B.pPos.X[6, 0]
+   vyball = B.pPos.X[7, 0]
+   
+   xr = P.pPos.X[0,0]
+   yr = P.pPos.X[1,0]
+   yaw_r = P.pPos.X[5,0]
+   vxr = P.pPos.X[6, 0]
+   vyr = P.pPos.X[7, 0]
+
+   x_partener = P2.pPos.X[0, 0]
+   y_partener = P2.pPos.X[1, 0]
+
+   phi = np.arctan2(yball - yr, xball - xr)
+   alpha = normalizeAngle(- phi + yaw_r)
+
+   # Angulo entre a bola e centro do gol do adversario
+   theta = np.arctan2(yball, xball - 0.8)
+
+   # Setando a posição desejado como uma posição ficticia atrás da bola,
+   # porém com o mesmo angulo entre a bola e o centro do gol do adversário
+   xd = xball - c if abs(xball - c) < 0.7 else xball
+   yd = yball + c * np.sin(theta) if abs(yball + c * np.sin(theta)) < 0.6 else yball 
+
+
+   if alpha > np.pi/2:
+      k1 *= -1
+      krepulsive *= -1
+      alpha -= np.pi
+   elif alpha < -np.pi/2:
+      k1 *= -1
+      krepulsive *= -1
+      alpha += np.pi
+
+   rho = np.sqrt((xd-xr) ** 2 + (yd-yr) ** 2)
+   drho = ((xball - xr) * (vxball - vxr) + (yball - yr) * (vyball - vyr)) / rho
+
+   rho_partener = np.sqrt((x_partener - xr)**2 + (y_partener - yr)**2)
+
+   if distance((xr, yr), (xball, yball)) - distance((x_partener, y_partener), (xball, yball)) < 0:
+       krepulsive = 0
+   
+   v = vmax * np.tanh(k1 * rho) + drho * 0.1 -  0.05 * krepulsive / rho_partener
+   w = wmax * alpha * k2
+
+   P.pSC.Ud[0, 0] = v
+   P.pSC.Ud[1, 0] = w
+
+   if rho < 7/100:
+        P.pSC.Ud[0, 0] = 0
+        if np.abs(phi) < np.pi/2:
+            if phi < 0:
+                P.pSC.Ud[1, 0] = wmax
+            else:
+                P.pSC.Ud[1, 0] = -wmax
+        else:
+            if phi < 0:
+                P.pSC.Ud[1, 0] = wmax
+            else:
+                P.pSC.Ud[1, 0] = -wmax   
+
+   return P
+
+def Defenser(P, P2, B, gain = [1.5, .07]):
    vmax = P.pPar.vmax
    wmax = P.pPar.wmax
 
    k1 = gain[0]
    k2 = gain[1]
+   krepulsive = k1
 
    xball = B.pPos.X[0,0]
    yball = B.pPos.X[1,0]
@@ -300,24 +394,48 @@ def Attacker6(P, P2, B, gain = [1, .1]):
 
    if alpha > np.pi/2:
       k1 *= -1
+      krepulsive *= -1
       alpha -= np.pi
    elif alpha < -np.pi/2:
       k1 *= -1
+      krepulsive *= -1
       alpha += np.pi
 
    rho = np.sqrt((xball-xr) ** 2 + (yball-yr) ** 2)
    drho = ((xball - xr) * (vxball - vxr) + (yball - yr) * (vyball - vyr)) / rho
 
    rho_partener = np.sqrt((x_partener - xr)**2 + (y_partener - yr)**2)
-   #print(f'Rho_par: {rho_partener}, k1: {k1}')
+
+   if distance((xr, yr), (xball, yball)) - distance((x_partener, y_partener), (xball, yball)) < 0:
+       krepulsive = 0
    
-   v = vmax * np.tanh(k1 * rho) + drho * 0.1 -  0.05 * k1 / rho_partener
+   v = vmax * np.tanh(k1 * rho) + drho * 0.1 -  0.05 * krepulsive / rho_partener
    w = wmax * alpha * k2
 
    P.pSC.Ud[0, 0] = v
    P.pSC.Ud[1, 0] = w
 
+   if rho < 7/100:
+        P.pSC.Ud[0, 0] = 0
+        if np.abs(phi) < np.pi/2:
+            if phi < 0:
+                P.pSC.Ud[1, 0] = wmax
+            else:
+                P.pSC.Ud[1, 0] = -wmax
+        else:
+            if phi < 0:
+                P.pSC.Ud[1, 0] = wmax
+            else:
+                P.pSC.Ud[1, 0] = -wmax   
+
    return P
+
+
+
+
+
+
+
 
 def distance(p1, p2):
     return np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)

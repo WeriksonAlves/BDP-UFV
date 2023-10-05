@@ -173,13 +173,16 @@ class Player:
 
         if self.pFlag.Connected: # Real BDP - Robot pose             
             # Current position
+            print('Xc: [%.3f, %.3f, %.3f], ' %(self.pPos.Xc[0,0],self.pPos.Xc[1,0],self.pPos.Xc[5,0]), end='')
+
             self.pPos.X[[0, 1, 5]] = self.pPos.Xc[[0, 1, 5]] + np.dot(np.array([[np.cos(self.pPos.X[5,0]), -np.sin(self.pPos.X[5,0]), 0],
                                                                                 [np.sin(self.pPos.X[5,0]), np.cos(self.pPos.X[5,0]), 0],
                                                                                 [0, 0, 1]]), 
                                                                     np.array([[self.pPar.a * np.cos(self.pPar.alpha)],
                                                                                 [self.pPar.a * np.sin(self.pPar.alpha)],
                                                                                 [0]]))
-            
+            print('X: [%.3f, %.3f, %.3f], ' %(self.pPos.X[0,0],self.pPos.X[1,0],self.pPos.X[5,0]), end='')
+
             # Robot velocities: First-time derivative of the current position
             self.pPos.X[[6, 7, 11]] = (self.pPos.X[[0, 1, 5]] - self.pPos.Xa[[0, 1, 5]]) / self.pPar.Ts
 
@@ -292,6 +295,13 @@ class Player:
             print(f'Defensor {self.Funcao}')
         elif self.Funcao == 2:
             print(f'Atacante {self.Funcao}')
+
+
+
+
+
+
+
 
 class Ball:
     def __init__(self):

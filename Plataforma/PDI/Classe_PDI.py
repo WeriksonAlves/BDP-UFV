@@ -74,7 +74,7 @@ class JanelaPDI(object):
         self.Criar_ComboBox()
         self.Criar_Botoes()
         
-        self.juiz = referee_class(HOST='192.168.0.110')
+        self.juiz = referee_class(HOST='192.168.0.112')
         threading.Thread(target=self.juiz.message).start()
         pg.init() # Inicializa a biblioteca pg
         threading.Thread(target=self.Comando_Main).start()
@@ -160,6 +160,8 @@ class JanelaPDI(object):
         self.Var_EquipeAmarelo.set(False)
 
         # Define a cor da minha equipe como ciano
+        self.juiz.cortime = 'BLUE'
+        print(f'self.juiz.cortime {self.juiz.cortime}')
         self.Var_CorMinhaEquipe = 5
         self.Var_CorMinhaEquipe_BGR = (255, 0, 0)
 
@@ -173,6 +175,7 @@ class JanelaPDI(object):
         self.Var_EquipeAmarelo.set(True)
 
         # Define a cor da minha equipe como amarelo
+        self.juiz.cortime = 'YELLOW'
         self.Var_CorMinhaEquipe = 2
         self.Var_CorMinhaEquipe_BGR = (0, 255, 255)
 
@@ -491,28 +494,28 @@ class JanelaPDI(object):
                 self.Var_TesteMecanico = False
 
                 if tempo > ((self.P1.pPar.Ts + self.P2.pPar.Ts + self.P3.pPar.Ts)/3):
-                    #print('X2: [%.3f, %.3f, %.3f], Xd: [%.3f, %.3f, %.3f], tap: %.3f, ' 
-                    #     %(self.P2.pPos.X[0,0],self.P2.pPos.X[1,0],self.P2.pPos.X[5,0],
-                    #       self.P2.pPos.Xd[0,0],self.P2.pPos.Xd[1,0],self.P2.pPos.Xd[5,0],
+                    # print('X3: [%.3f, %.3f, %.3f], Xd: [%.3f, %.3f, %.3f], tap: %.3f, ' 
+                    #     %(self.P3.pPos.X[0,0],self.P3.pPos.X[1,0],self.P3.pPos.X[5,0],
+                    #       self.P3.pPos.Xd[0,0],self.P3.pPos.Xd[1,0],self.P3.pPos.Xd[5,0],
                     #         time.time() - tempo), end='')
                     
                     tempo = time.time()
                     self.InicioCiclo = time.time()
 
                     self.B.pPos.Xc[[0,1,5]] = self.Var_PosPart.T[[0]].T
-                    self.P1.pPos.Xc[[0,1,5]] = self.Var_PosPart.T[[1]].T
-                    self.P2.pPos.Xc[[0,1,5]] = self.Var_PosPart.T[[2]].T
+                    # self.P1.pPos.Xc[[0,1,5]] = self.Var_PosPart.T[[1]].T
+                    # self.P2.pPos.Xc[[0,1,5]] = self.Var_PosPart.T[[2]].T
                     self.P3.pPos.Xc[[0,1,5]] = self.Var_PosPart.T[[3]].T
                     
-                    self.B.bGetSensorData()
-                    self.P1.rGetSensorData()
-                    self.P2.rGetSensorData()
+                    # self.B.bGetSensorData()
+                    # self.P1.rGetSensorData()
+                    # self.P2.rGetSensorData()
                     self.P3.rGetSensorData()                       
                     
                     self.Comando_AutoPosicionamento()
 
-                    self.P1.rSendControlSignals()
-                    self.P2.rSendControlSignals()
+                    # self.P1.rSendControlSignals()
+                    # self.P2.rSendControlSignals()
                     self.P3.rSendControlSignals()                   
 
                     self.rpm_list = [int(self.P1.pSC.RPM[[0]]),int(self.P1.pSC.RPM[[1]]),int(self.P2.pSC.RPM[[0]]),int(self.P2.pSC.RPM[[1]]),int(self.P3.pSC.RPM[[0]]),int(self.P3.pSC.RPM[[1]])]
@@ -794,41 +797,42 @@ class JanelaPDI(object):
             self.P2 = ctrl_rbin(self.P2)
             self.P3 = ctrl_rbin(self.P3)
         
-        elif self.juiz.freeball:
-            print(f'Freball: True, Favoravel: {self.juiz.favorable}, Quadrante: {self.juiz.quadrante}')
+        else:#if self.juiz.freeball:
+            print(f'Freball: True, Quadrante: {self.juiz.quadrante} ',end='')
             
             if self.Var_LadoAtaque == -1:
-                self.player_fcn[0].pPos.Xd[[0,1,5]] = self.player_fcn[0].pPos.X[[0,1,5]]
-                self.player_fcn[2].pPos.Xd[[0,1,5]] = self.player_fcn[2].pPos.X[[0,1,5]]
+                self.player_fcn[0].pSC.Ud[[0,1]] = np.array([[0],[0]])
+                self.player_fcn[1].pSC.Ud[[0,1]] = np.array([[0],[0]])
                 if self.juiz.quadrante == '1':   self.player_fcn[1].pPos.Xd[[0,1,5]] = np.array([[ .575],[ .400],[np.pi]])
                 elif self.juiz.quadrante == '2': self.player_fcn[1].pPos.Xd[[0,1,5]] = np.array([[-.175],[ .400],[np.pi]])
                 elif self.juiz.quadrante == '3': self.player_fcn[1].pPos.Xd[[0,1,5]] = np.array([[-.175],[-.400],[np.pi]])
-                elif self.juiz.quadrante == '4': self.player_fcn[1].pPos.Xd[[0,1,5]] = np.array([[ .575],[-.400],[np.pi]]);print('q4')
+                elif self.juiz.quadrante == '4': self.player_fcn[1].pPos.Xd[[0,1,5]] = np.array([[ .575],[-.400],[np.pi]])
                 else: print('Erro no quadrante. Ataque para esquerda.')
 
             elif self.Var_LadoAtaque == 1:
-                self.player_fcn[0].pPos.Xd[[0,1,5]] = self.player_fcn[0].pPos.X[[0,1,5]]
-                self.player_fcn[2].pPos.Xd[[0,1,5]] = self.player_fcn[2].pPos.X[[0,1,5]]
-                if self.juiz.quadrante == '1':   self.player_fcn[1].pPos.Xd[[0,1,5]] = np.array([[ .175],[ .400],[0]])
-                elif self.juiz.quadrante == '2': self.player_fcn[1].pPos.Xd[[0,1,5]] = np.array([[-.575],[ .400],[0]])
-                elif self.juiz.quadrante == '3': self.player_fcn[1].pPos.Xd[[0,1,5]] = np.array([[-.575],[-.400],[0]])
-                elif self.juiz.quadrante == '4': self.player_fcn[1].pPos.Xd[[0,1,5]] = np.array([[ .175],[-.400],[0]])
+                self.player_fcn[0].pSC.Ud[[0,1]] = np.array([[0],[0]])
+                self.player_fcn[1].pSC.Ud[[0,1]] = np.array([[0],[0]])
+                if self.juiz.quadrante == '1':   self.player_fcn[2].pPos.Xd[[0,1,5]] = np.array([[ .175],[ .400],[0]])
+                elif self.juiz.quadrante == '2': self.player_fcn[2].pPos.Xd[[0,1,5]] = np.array([[-.575],[ .400],[0]])
+                elif self.juiz.quadrante == '3': self.player_fcn[2].pPos.Xd[[0,1,5]] = np.array([[-.575],[-.400],[0]])
+                elif self.juiz.quadrante == '4': self.player_fcn[2].pPos.Xd[[0,1,5]] = np.array([[ .175],[-.400],[0]])
                 else: print('Erro no quadrante. Ataque para esquerda.')
+                print('Xd: [%.3f, %.3f, %.3f], ' %(self.player_fcn[2].pPos.Xd[0,0],self.player_fcn[2].pPos.Xd[1,0],self.player_fcn[2].pPos.Xd[5,0]), end='')
 
             else: print('Erro no lado de ataque')
             
-            self.P1 = f1(self.P1)
-            self.P2 = f1(self.P2)
-            self.P3 = f1(self.P3)
+            # self.player_fcn[0] = ctrl_rbin(self.player_fcn[0])
+            # self.player_fcn[1] = ctrl_rbin(self.player_fcn[1])
+            self.player_fcn[2] = ctrl_rbin(self.player_fcn[2])
            
-        else: # Jogo normal
-            self.P1.pPos.Xd[[0,1,5]] = self.Var_PosPart.T[[0]].T
-            self.P2.pPos.Xd[[0,1,5]] = self.Var_PosPart.T[[0]].T
-            self.P3.pPos.Xd[[0,1,5]] = self.Var_PosPart.T[[0]].T
+        # else: # Jogo normal
+        #     self.P1.pPos.Xd[[0,1,5]] = self.Var_PosPart.T[[0]].T
+        #     self.P2.pPos.Xd[[0,1,5]] = self.Var_PosPart.T[[0]].T
+        #     self.P3.pPos.Xd[[0,1,5]] = self.Var_PosPart.T[[0]].T
 
-            # self.P1 = Ctrl_tgh_int(self.P1,[.8, .7]) # 0.8 0.7
-            self.P2 = Attacker5(self.P2,self.B, [1.5,.07])#,[.8, .7]) # 0.7 0.7
-            self.P3 = Attacker6(self.P3,self.P2,self.B, [1.5,.07])#,[.8, .7]) # 0.7 0.7
+        #     self.P1 = Ctrl_tgh_int(self.P1,[.8, .7]) # 0.8 0.7
+        #     self.P2 = Attacker6(self.P2,self.P3,self.B, [1.5,.07])#,[.8, .7]) # 0.7 0.7
+        #     self.P3 = Attacker6(self.P3,self.P2,self.B, [1.5,.07])#,[.8, .7]) # 0.7 0.7
  
     def __conver2byte(self, elements:np.array) -> str : 
         string_empty = ''

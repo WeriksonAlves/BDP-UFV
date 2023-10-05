@@ -11,19 +11,20 @@ class referee_class(object):
         self.server_socket.bind((HOST, PORT))
 
         self.penalty, self.kickoff, self.goalkick, self.freeball, self.halt = False, False, False, False, False
-
+        self.cortime = None
         self.play, self.play_ant = False, False
         self.favorable, self.quadrante = False, '1'
 
-    def message(self, cor ='YELLOW'):
+    def message(self):#, cor = 'YELLOW'):
+        
         #temos que definir a cor do nosso time aqui para verificar se a marcação foi a favor ou contra
         while True:
             try:
                 message, address = self.server_socket.recvfrom(1024)
                 self.ref.ParseFromString(message)
-                self.read(MessageToDict(self.ref), cor)
+                self.read(MessageToDict(self.ref), self.cortime)#cor)
                 print(self.play,self.penalty, self.freeball, self.goalkick, self.kickoff, self.favorable, self.quadrante,self.halt)
-            except:pass
+            except: pass
 
     def read(self, msg,color):
         #retorna as variáveis para False quando o jogo reinicia

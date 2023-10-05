@@ -1,6 +1,6 @@
 import numpy as np
 
-def ctrl_rbin(P,gain = [.1,.1,.1,.1]):
+def ctrl_rbin(P,gain = [0.2,0,.5,0]):
     """
     Controle de posição baseado em CV
     """
@@ -9,11 +9,14 @@ def ctrl_rbin(P,gain = [.1,.1,.1,.1]):
     Kpv = gain[2]
     Kdv = gain[3]
 
+    vmax = P.pPar.vmax
+    wmax = P.pPar.wmax
+
     # Instantaneous Error:
     Xda = P.pPos.Xtil.copy()
     P.pPos.Xtil = (P.pPos.Xd - P.pPos.X)
     
-    Et = -P.pPos.X[5,0]
+    Et = -P.pPos.Xtil[5,0]
     Etant = -Xda[5,0]
 
     for ii in range(3, 6):
@@ -23,14 +26,17 @@ def ctrl_rbin(P,gain = [.1,.1,.1,.1]):
             else:
                 P.pPos.Xtil[ii] = P.pPos.Xtil[ii] - 2 * np.pi
 
-    w = Kpt*P.pPos.X[5,0] + Kdt*(Et - Etant)
+    w = Kpt*Et + Kdt*(Et - Etant)
     Dant = np.sqrt(Xda[0,0]**2 + Xda[1,0]**2)
     D = np.sqrt(P.pPos.X[0,0]**2 + P.pPos.X[1,0]**2)
     Vel = np.sqrt(P.pPos.X[6,0]**2 + P.pPos.X[7,0]**2)
     v = Kpv* (-Vel) + Kdv *(D - Dant)
 
-    P.pSC.Ud[0,0] = v
-    P.pSC.Ud[1,0] = w
+    P.pSC.Ud.dtype = np.float64
+    P.pSC.Ud[[0]] = vmax * np.tanh(v)
+    P.pSC.Ud[[1]] = wmax * np.tanh(w)
+
+    return P
 
 
 # class Controls:
