@@ -934,9 +934,9 @@ class JanelaPDI(object):
     def Camando_CriaMascara(self,quadro,vetor_limites):
         # Cria a mascara apartir do vetor de limites em HSV
         CorHSV = cv2.cvtColor(quadro, cv2.COLOR_BGR2HSV)
-        h,s,v = cv2.split(CorHSV)
-        vequalizado = cv2.equalizeHist(v)
-        CorHSV = cv2.merge((h,s,vequalizado))
+        # h,s,v = cv2.split(CorHSV)
+        # vequalizado = cv2.equalizeHist(v)
+        # CorHSV = cv2.merge((h,s,vequalizado))
         LimiteCorInferior = np.array([vetor_limites[0], vetor_limites[2], vetor_limites[4]])
         LimiteCorSuperior = np.array([vetor_limites[1], vetor_limites[3], vetor_limites[5]])
         MascaraCor = cv2.inRange(CorHSV, LimiteCorInferior, LimiteCorSuperior)
@@ -1094,6 +1094,7 @@ class JanelaPDI(object):
             AplicacaoCor = MatrizCores[0]
             for i in range(1, 7):
                 AplicacaoCor = cv2.bitwise_or(AplicacaoCor, MatrizCores[i])            
+
             cv2.imshow("Visao Segmentacao", AplicacaoCor)
             cv2.waitKey(self.Var_FPS)
             if (cv2.getWindowProperty("Visao Segmentacao", cv2.WND_PROP_VISIBLE) < 1):
