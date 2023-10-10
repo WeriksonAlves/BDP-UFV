@@ -1,14 +1,22 @@
 import socket
+import struct
 from proto_db.vssref_command_pb2 import VSSRef_Command
 from google.protobuf.json_format import MessageToDict
 
 class referee_class(object):
 
-    def __init__(self,  HOST = "192.168.0.123", PORT = 20000):
+    def __init__(self,  HOST, PORT):
         #temos de definir o endereço e a porta
         self.ref = VSSRef_Command()
+        mult_gp = HOST
+        addr_server = ('', PORT)
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.server_socket.bind((HOST, PORT))
+        
+        self.server_socket.bind(addr_server)
+
+        group = socket.inet_aton(mult_gp)
+        mreq = struct.pack('4sL', group, socket.INADDR_ANY)
+        self.server_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
         self.penalty, self.kickoff, self.goalkick, self.freeball, self.halt = False, False, False, False, False
         self.cortime = None

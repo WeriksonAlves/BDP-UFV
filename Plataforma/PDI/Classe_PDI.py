@@ -74,7 +74,7 @@ class JanelaPDI(object):
         self.Criar_ComboBox()
         self.Criar_Botoes()
         
-        self.juiz = referee_class(HOST='192.168.0.112')
+        self.juiz = referee_class(HOST='224.5.23.2',PORT=10313)
         threading.Thread(target=self.juiz.message).start()
         pg.init() # Inicializa a biblioteca pg
         threading.Thread(target=self.Comando_Main).start()
@@ -404,6 +404,7 @@ class JanelaPDI(object):
                        3: self.P3}
         
         for idx, J in enumerate([self.Var_J1_Funcao.current(),self.Var_J2_Funcao.current(),self.Var_J3_Funcao.current()]):
+            print(idx, J)
             self.player_fcn[J] = players_fcn[idx + 1]
         
         return Matriz
@@ -431,10 +432,19 @@ class JanelaPDI(object):
                 while True:
                     t = time.time() - start
 
-                    self.pEsp.write(b'100,-100,100,-100,100,-100\n') #Direita esquerda
+                    self.pEsp.write(b'200,-200,200,-200,200,-200\n') #Direita esquerda
                     if t > tsim:
                         self.pEsp.write(b'0,0,0,0,0,0\n')
                         break
+
+                # start = time.time()
+                # while True:
+                #     t = time.time() - start
+
+                #     self.pEsp.write(b'-200,200,-200,200,-200,200\n') #Direita esquerda
+                #     if t > tsim:
+                #         self.pEsp.write(b'0,0,0,0,0,0\n')
+                #         break
 
                 # Ativa a variável de controle de comunicação e atualiza a barra de status
                 self.Var_Comunicacao = True
@@ -484,7 +494,7 @@ class JanelaPDI(object):
         self.Var_TesteMecanico = True
     
     def Comando_Main(self):        
-        tempo = time.time()
+        tempo = self.tic()
         while True: 
             if self.Var_ConfigInfo:
                 self.Obter_DadosJogo()
@@ -498,14 +508,15 @@ class JanelaPDI(object):
                 self.Var_Joystick = False
                 self.Var_TesteMecanico = False
 
-                if tempo > ((self.P1.pPar.Ts + self.P2.pPar.Ts + self.P3.pPar.Ts)/3):
-                    # print('X3: [%.3f, %.3f, %.3f], Xd: [%.3f, %.3f, %.3f], tap: %.3f, ' 
-                    #     %(self.P3.pPos.X[0,0],self.P3.pPos.X[1,0],self.P3.pPos.X[5,0],
-                    #       self.P3.pPos.Xd[0,0],self.P3.pPos.Xd[1,0],self.P3.pPos.Xd[5,0],
-                    #         time.time() - tempo), end='')
+                if tempo > ((self.P1.pPar.Ts + self.P2.pPar.Ts + self.P3.pPar.Ts)/3): # self.Tempo_PDI:
+                    # print('X1: [%.3f, %.3f, %.3f], X2: [%.3f, %.3f, %.3f], X3: [%.3f, %.3f, %.3f], tPDI: %.3f, t_ctrl: %.3f, ' 
+                    #     %(self.P1.pPos.X[0,0],self.P1.pPos.X[1,0],self.P1.pPos.X[5,0],
+                    #       self.P2.pPos.X[0,0],self.P2.pPos.X[1,0],self.P2.pPos.X[5,0],
+                    #       self.P3.pPos.X[0,0],self.P3.pPos.X[1,0],self.P3.pPos.X[5,0],
+                    #       self.Tempo_PDI, self.toc(tempo)), end='')
                     
-                    tempo = time.time()
-                    self.InicioCiclo = time.time()
+                    tempo = self.tic()
+                    self.InicioCiclo = self.tic()
 
                     self.B.pPos.Xc[[0,1,5]] = self.Var_PosPart.T[[0]].T
                     self.P1.pPos.Xc[[0,1,5]] = self.Var_PosPart.T[[1]].T
@@ -524,6 +535,7 @@ class JanelaPDI(object):
                     self.P3.rSendControlSignals()                   
 
                     self.rpm_list = [int(self.P1.pSC.RPM[[0]]),int(self.P1.pSC.RPM[[1]]),int(self.P2.pSC.RPM[[0]]),int(self.P2.pSC.RPM[[1]]),int(self.P3.pSC.RPM[[0]]),int(self.P3.pSC.RPM[[1]])]
+                    #self.rpm_list = [100,100 ,0,0, 0,0]
                     self.send_rpm()
                 
                 
@@ -543,7 +555,7 @@ class JanelaPDI(object):
 
                 while self.Var_Joystick == True:
                     self.Var_Jogando = False
-                    self.InicioCiclo = time.time()                    
+                    self.InicioCiclo = self.tic()                    
 
                     # Captura eventos dos joysticks
                     for event in pg.event.get():
@@ -605,7 +617,7 @@ class JanelaPDI(object):
                 while self.toc(t) < tsim:
                     if self.toc(tc) > tap:
                         tc = self.tic() 
-                        self.InicioCiclo = time.time()               
+                        self.InicioCiclo = self.tic()               
                         '-----------------------------------------------------'
                         # Data aquisition
                         if self.Var_Comunicacao:
@@ -704,17 +716,17 @@ class JanelaPDI(object):
     
     def send_rpm(self):
         try:            
-           print(f'[1D,1E,2D,2E,3D,3E] {self.rpm_list}')
+           #print(f'[1D,1E,2D,2E,3D,3E] {self.rpm_list}')
            self.pEsp.write(self.__conver2byte(self.rpm_list))
-           EndCycle = time.time()
-           TempoVerificacao = EndCycle - self.InicioCiclo
+        #    EndCycle = time.time()
+        #    TempoVerificacao = EndCycle - self.InicioCiclo
            self.Limpar_BarraDeStatus()
-           self.Atualizar_BarrraDeStatus('Partida Iniciada.\nFrequência de Amostragem: %.4f' % TempoVerificacao)
+           self.Atualizar_BarrraDeStatus('Partida Iniciada.\nFrequência de Amostragem: %.4f' % self.toc(self.InicioCiclo))
         except:
-            EndCycle = time.time()
-            TempoVerificacao = EndCycle - self.InicioCiclo
+            # EndCycle = time.time()
+            # TempoVerificacao = EndCycle - self.InicioCiclo
             self.Limpar_BarraDeStatus()
-            self.Atualizar_BarrraDeStatus('Partida Iniciada.\nAtenção cominicação não Foi iniciada \nFrequência de Amostragem: %.4f' % TempoVerificacao)
+            self.Atualizar_BarrraDeStatus('Partida Iniciada.\nAtenção cominicação não Foi iniciada \nFrequência de Amostragem: %.4f' % self.toc(self.InicioCiclo))
 
     def Comando_joystick(self):
         if self.Var_Jogando or self.juiz.play: return None
@@ -746,17 +758,17 @@ class JanelaPDI(object):
             
             else:print('Erro em kickoff')
 
-            self.player_fcn[0] = Attacker4(self.player_fcn[0])
+            self.player_fcn[0] = autonomos_pos_gk(self.player_fcn[0])
             self.player_fcn[1] = autonomos_pos(self.player_fcn[1],self.player_fcn[2],[1.5,.09])
             self.player_fcn[2] = autonomos_pos(self.player_fcn[2],self.player_fcn[1],[1.5,.09])
 
         elif self.juiz.penalty:
             print(f'Penalty: True, Favoravel: {self.juiz.favorable}')
             if self.Var_LadoAtaque == -1:
-                self.player_fcn[0].pPos.Xd[[0,1,5]] = np.array([[.750],[0],[np.pi/2]])
+                self.player_fcn[0].pPos.Xd[[0,1,5]] = np.array([[.650],[0],[np.pi/2]])
                 if self.juiz.favorable:
-                    self.player_fcn[1].pPos.Xd[[0,1,5]] = np.array([[ .275],[.0],[np.pi]])
-                    self.player_fcn[2].pPos.Xd[[0,1,5]] = np.array([[-.275],[.0],[np.pi]])
+                    self.player_fcn[1].pPos.Xd[[0,1,5]] = np.array([[ .160],[-.370],[np.pi]])
+                    self.player_fcn[2].pPos.Xd[[0,1,5]] = np.array([[],[.0],[np.pi]])
                 elif not self.juiz.favorable:
                     self.player_fcn[1].pPos.Xd[[0,1,5]] = np.array([[ .175],[-.40],[np.pi]])
                     self.player_fcn[2].pPos.Xd[[0,1,5]] = np.array([[ .175],[ .40],[np.pi]])
@@ -772,7 +784,7 @@ class JanelaPDI(object):
 
             else: print('Erro no lado de ataque')
             
-            self.player_fcn[0] = Attacker4(self.player_fcn[0])
+            self.player_fcn[0] = autonomos_pos_gk(self.player_fcn[0])
             self.player_fcn[1] = autonomos_pos(self.player_fcn[1],self.player_fcn[2],[1.5,.09])
             self.player_fcn[2] = autonomos_pos(self.player_fcn[2],self.player_fcn[1],[1.5,.09])
 
@@ -798,7 +810,7 @@ class JanelaPDI(object):
 
             else: print('Erro no lado de ataque')
             
-            self.player_fcn[0] = Attacker4(self.player_fcn[0])
+            self.player_fcn[0] = autonomos_pos_gk(self.player_fcn[0])
             self.player_fcn[1] = autonomos_pos(self.player_fcn[1],self.player_fcn[2],[1.5,.09])
             self.player_fcn[2] = autonomos_pos(self.player_fcn[2],self.player_fcn[1],[1.5,.09])
         
@@ -830,7 +842,7 @@ class JanelaPDI(object):
             # self.player_fcn[0] = ctrl_rbin(self.player_fcn[0])
             # self.player_fcn[1] = ctrl_rbin(self.player_fcn[1])
             # self.player_fcn[2] = ctrl_rbin(self.player_fcn[2])
-            self.player_fcn[0] = Attacker4(self.player_fcn[0])
+            self.player_fcn[0] = autonomos_pos_gk(self.player_fcn[0])
             self.player_fcn[1] = autonomos_pos(self.player_fcn[1],self.player_fcn[2],[1.5,.09])
             self.player_fcn[2] = autonomos_pos(self.player_fcn[2],self.player_fcn[1],[1.5,.09])
            
@@ -840,8 +852,9 @@ class JanelaPDI(object):
             self.P3.pPos.Xd[[0,1,5]] = self.Var_PosPart.T[[0]].T
 
             #self.P1 = Ctrl_tgh_int(self.P1,[.8, .7]) # 0.8 0.7
-            self.P2 = OfficialDefenser(self.P2,self.B, [1.1,.07])#,[.8, .7]) # 0.7 0.7
-            self.P3 = OfficialAttacker(self.P3,self.P1, self.P2, self.B, [1.5,.09])#,[.8, .7]) # 0.7 0.7
+            self.player_fcn[0] = OfficialDefenser(self.player_fcn[0],self.B, [1.5,.07])#,[.8, .7]) # 0.7 0.7
+            self.player_fcn[1] = OfficialAttacker(self.player_fcn[1], self.player_fcn[2], self.player_fcn[0], self.B, [1.6,.085])
+            self.player_fcn[2] = OfficialAttacker(self.player_fcn[2],self.player_fcn[1], self.player_fcn[0], self.B, [1.6,.085])#,[.8, .7]) # 0.7 0.7
  
     def __conver2byte(self, elements:np.array) -> str : 
         string_empty = ''
@@ -870,37 +883,38 @@ class JanelaPDI(object):
     exemplo = []
     '''Funções para obter informações sobre o pdi: Inicio'''
     def Obter_DadosJogo(self):
-        t_PDI = time.time()
+        t_PDI = self.tic()
         _, frames = self.Var_InformacoesCamera.read()
         frames = cv2.resize(cv2.medianBlur(frames, self.Var_MedianBlur), [640, 480])  # Aplica um filtro de mediana
 
         # Posição da bola em pixels
-        Ball_Pos = self.Comando_BuscarBola(frames, self.Var_MatrizCor[1][0:],100,200)        
+        Ball_Pos = self.Comando_BuscarBola(frames, self.Var_MatrizCor[1][0:],50,200)        
         # Ball_Pos = self.Comando_BuscarPosicaoCor(frames,self.Var_MatrizCor[1][0:],100,200)
 
         # Posição das cores da minha equipe e do oponente
-        MinhaEquipe,_ = self.Comando_BuscarPosicaoCor(frames, self.Var_MatrizCor[self.Var_CorMinhaEquipe][0:],100,300)
-        OpPos = self.Comando_BuscarPosicaoCor_Opp(frames, self.Var_MatrizCor[self.Var_CorEquipeAdversaria][0:],125,300)
+        MinhaEquipe,_ = self.Comando_BuscarPosicaoCor(frames, self.Var_MatrizCor[self.Var_CorMinhaEquipe][0:],50,300)
+        OpPos = self.Comando_BuscarPosicaoCor_Opp(frames, self.Var_MatrizCor[self.Var_CorEquipeAdversaria][0:],50,300)
 
         # Posição das cores dos meus jogadores
-        P1_Centroide_Cor_1,_ = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[0][:6],50,150)
-        P2_Centroide_Cor_1,_ = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[1][:6],50,150)
-        P3_Centroide_Cor_1,_ = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[2][:6],50,150)
-
-        P1_Centroide_Cor_2,_ = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[0][6:],50,150)
-        P2_Centroide_Cor_2,_ = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[1][6:],50,150)
-        P3_Centroide_Cor_2,_ = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[2][6:],50,150)
+        P1_Centroide_Cor_1,_ = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[0][:6],50,175)
+        P2_Centroide_Cor_1,_ = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[1][:6],50,175)
+        P3_Centroide_Cor_1,_ = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[2][:6],50,175)
+        
+        P1_Centroide_Cor_2,_ = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[0][6:],50,175)
+        P2_Centroide_Cor_2,_ = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[1][6:],50,175)
+        P3_Centroide_Cor_2,_ = self.Comando_BuscarPosicaoCor(frames, self.CoresCamisas[2][6:],50,175)
 
         # Posição do centroide de identificação de cada jogador
-        Centroide_Cor_P1,_ = self.Comando_AssociarCores(P1_Centroide_Cor_1,P1_Centroide_Cor_2,50)
-        Centroide_Cor_P2,_ = self.Comando_AssociarCores(P2_Centroide_Cor_1,P2_Centroide_Cor_2)
-        Centroide_Cor_P3,_ = self.Comando_AssociarCores(P3_Centroide_Cor_1,P3_Centroide_Cor_2)
+        Centroide_Cor_P1,_ = self.Comando_AssociarCores(P1_Centroide_Cor_1,P1_Centroide_Cor_2,80)
+        Centroide_Cor_P2,_ = self.Comando_AssociarCores(P2_Centroide_Cor_1,P2_Centroide_Cor_2,80)
+        Centroide_Cor_P3,_ = self.Comando_AssociarCores(P3_Centroide_Cor_1,P3_Centroide_Cor_2,80)
 
         # Postura do robo
+        # print('Inicio')
         P1_MyPos = self.Comando_EncontraPostura(MinhaEquipe,Centroide_Cor_P1)
         P2_MyPos = self.Comando_EncontraPostura(MinhaEquipe,Centroide_Cor_P2)
         P3_MyPos = self.Comando_EncontraPostura(MinhaEquipe,Centroide_Cor_P3)
-
+        # print('Final')
         self.Cor_Jog1 = self.CorCamisa_BGR[0][0:]
         self.Cor_Jog2 = self.CorCamisa_BGR[1][0:]
         self.Cor_Jog3 = self.CorCamisa_BGR[2][0:]
@@ -914,10 +928,15 @@ class JanelaPDI(object):
         if(len(OpPos) != 0): self.Var_PosPart[0:,4] = OpPos[0][0:,0]
         if(len(OpPos) != 0): self.Var_PosPart[0:,5] = OpPos[1][0:,0]
         if(len(OpPos) != 0): self.Var_PosPart[0:,6] = OpPos[2][0:,0]
+
+        self.Tempo_PDI = self.toc(t_PDI)
     
     def Camando_CriaMascara(self,quadro,vetor_limites):
         # Cria a mascara apartir do vetor de limites em HSV
         CorHSV = cv2.cvtColor(quadro, cv2.COLOR_BGR2HSV)
+        h,s,v = cv2.split(CorHSV)
+        vequalizado = cv2.equalizeHist(v)
+        CorHSV = cv2.merge((h,s,vequalizado))
         LimiteCorInferior = np.array([vetor_limites[0], vetor_limites[2], vetor_limites[4]])
         LimiteCorSuperior = np.array([vetor_limites[1], vetor_limites[3], vetor_limites[5]])
         MascaraCor = cv2.inRange(CorHSV, LimiteCorInferior, LimiteCorSuperior)
@@ -999,7 +1018,7 @@ class JanelaPDI(object):
     def Comando_CalcCenter(self,point1, point2):
         return (np.array(point1) + np.array(point2)) / 2
 
-    def Comando_AssociarCores(self,VetorCor1,VetorCor2,Dist=80):
+    def Comando_AssociarCores(self,VetorCor1,VetorCor2,Dist=40):
         # Obtem a posição das duas cores de jogadores mais proximas
         Centroide_Cor = []
         Dados = []
@@ -1014,7 +1033,8 @@ class JanelaPDI(object):
 
         # Imprime as combinações mais próximas e seus centros
         for combo in closest_combinations:
-            combo_distance = self.Comando_CalcDistance(combo[0], combo[1])            
+            combo_distance = self.Comando_CalcDistance(combo[0], combo[1])   
+            # print(f'Par: {combo[0].T}, {combo[1].T}, Dist das combinações: {combo_distance}')         
             if combo_distance > Dist:
                 break
             combo_center = self.Comando_CalcCenter(combo[0], combo[1])            
@@ -1025,7 +1045,7 @@ class JanelaPDI(object):
     def Comando_EncontraPostura(self,VetorCorTime,Centroide_Cor):
         try:
             # Encontra o angulo entre a cor do time e o centroide da cores do respectivo jogador        
-            Pos, Dados = self.Comando_AssociarCores(VetorCorTime,Centroide_Cor)
+            Pos, Dados = self.Comando_AssociarCores(VetorCorTime,Centroide_Cor) # Numero pequeno para o azul
             vetor_dif = Dados[0][:,1] - Dados[0][:,0] # Vetor que aponta do centroide das cores do jogador 1 para a cor do time
             angulo_rad = np.arctan2(vetor_dif[1], vetor_dif[0]) # Calcula o ângulo entre o vetor e o eixo X da imagem (em radianos)
             Postura = np.array([[Pos[0][0][0]/1000],[Pos[0][1][0]/1000],[angulo_rad]])
@@ -1105,7 +1125,7 @@ class JanelaPDI(object):
         Campo_Virtual = cv2.resize(Campo_Virtual, [640, 480])
         return Campo_Virtual
 
-    def Comando_DesenhaSeta(self, Campo_Virtual, Posicao, Cor1, Cor2, Comprimento = 80, espessura = 10,raio=40):
+    def Comando_DesenhaSeta(self, Campo_Virtual, Posicao, Cor1, Cor2, Comprimento = 40, espessura = 10,raio=40):
         X, Y, Orientacao_Radianos = Posicao[0]*1000, Posicao[1]*1000, Posicao[2]
         X = int(X + 900)
         Y = int(Y + 750)

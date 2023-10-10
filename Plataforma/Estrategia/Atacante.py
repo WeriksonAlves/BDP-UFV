@@ -507,13 +507,14 @@ def Defenser(P, P2, B, gain = [1.5, .07]):
    return P
 
 
-def OfficialAttacker(P : Player, P2 : Player, G : Player, B : Ball, gain : list = [1.5, .07]) -> Player:
+def OfficialAttacker_Save(P : Player, P2 : Player, G : Player, B : Ball, gain : list = [1.5, .07]) -> Player:
     vmax = P.pPar.vmax
     wmax = P.pPar.wmax
 
     k1 = gain[0]
     k2 = gain[1]
     krepulsive = k1
+    kgk = k1
 
     xball = B.pPos.X[0,0]
     yball = B.pPos.X[1,0]
@@ -540,10 +541,12 @@ def OfficialAttacker(P : Player, P2 : Player, G : Player, B : Ball, gain : list 
 
     if alpha > np.pi/2:
         k1 *= -1
+        kgk *= -1
         krepulsive *= -1
         alpha -= np.pi
     elif alpha < -np.pi/2:
         k1 *= -1
+        kgk *= -1
         krepulsive *= -1
         alpha += np.pi
 
@@ -557,9 +560,13 @@ def OfficialAttacker(P : Player, P2 : Player, G : Player, B : Ball, gain : list 
         rho *= 2
 
     if distance((xr, yr), (xball, yball)) - distance((x_partener, y_partener), (xball, yball)) < 0:
-        krepulsive = 0  
+        krepulsive = 0
 
-    v = vmax * np.tanh(k1 * rho) + drho * 0.1 -  0.05 * krepulsive / rho_partener - 0.05 * k1 / rho_gk
+    if abs(yball) > 0.31:
+        kgk = 0
+        
+
+    v = vmax * np.tanh(k1 * rho) + drho * 0.1 -  0.05 * krepulsive / rho_partener - 0.25 * kgk / rho_gk
     w = wmax * alpha * k2
 
     P.pSC.Ud[0, 0] = v
@@ -608,12 +615,215 @@ def OfficialAttacker(P : Player, P2 : Player, G : Player, B : Ball, gain : list 
     return P
 
 
+
+def OfficialAttacker(P : Player, P2 : Player, G : Player, B : Ball, gain : list = [1.5, .07]) -> Player:
+    vmax = P.pPar.vmax
+    wmax = P.pPar.wmax
+
+    k1 = gain[0]
+    k2 = gain[1]
+    krepulsive = k1
+    kgk = k1
+    kv = 1
+
+    xball = B.pPos.X[0,0]
+    yball = B.pPos.X[1,0]
+    vxball = B.pPos.X[6, 0]
+    vyball = B.pPos.X[7, 0]
+
+    xr = P.pPos.Xc[0,0]
+    yr = P.pPos.Xc[1,0]
+    yaw_r = P.pPos.X[5,0]
+    vxr = P.pPos.X[6, 0]
+    vyr = P.pPos.X[7, 0]
+
+    x_partener = P2.pPos.X[0, 0]
+    y_partener = P2.pPos.X[1, 0]
+
+    x_goal_kp = G.pPos.X[0, 0]
+    y_goal_kp = G.pPos.X[1, 0]
+
+    phi = np.arctan2(yball - yr, xball - xr)
+    alpha = normalizeAngle(- phi + yaw_r)
+
+    
+
+    xd = xball  
+    yd =  yball 
+
+    if alpha > np.pi/2:
+        kv *= -1
+        k1 *= -1
+        kgk *= -1
+        krepulsive *= -1
+        alpha -= np.pi
+    elif alpha < -np.pi/2:
+        kv *= -1
+        k1 *= -1
+        kgk *= -1
+        krepulsive *= -1
+        alpha += np.pi
+
+    rho = np.sqrt((xd-xr) ** 2 + (yd-yr) ** 2)
+    rho_original = rho
+    drho = ((xball - xr) * (vxball - vxr) + (yball - yr) * (vyball - vyr)) / rho
+    rho_partener = np.sqrt((x_partener - xr)**2 + (y_partener - yr)**2)
+    rho_gk = np.sqrt((x_goal_kp - xr)**2 + (y_goal_kp - yr)**2)
+
+    #if rho < 0.15:
+    #    rho *= 2
+
+    if distance((xr, yr), (xball, yball)) - distance((x_partener, y_partener), (xball, yball)) < 0:
+        krepulsive = 0
+
+    if abs(yball) > 0.31:
+        kgk = 0
+    
+    #if abs(rho) < 0.15:
+    #    k1 *= 1.1
+
+    
+    if rho < 0.50 and alpha < np.deg2rad(10):
+        vmod = np.sqrt(vxball ** 2 + vyball ** 2) * kv * .09
+    else: # Ultima mudança que eu fiz!
+        vmod = 0.22515 * kv # Ao inves de ser zero eu configurei uma velocidade minima (100 RPM)
+        
+    print(vxball, vyball, vmod)
+    v = vmax * np.tanh(k1 * rho) + drho * 0.01 -  0.04 * krepulsive / rho_partener - 0.04 * kgk / rho_gk + vmod
+    w = wmax * alpha * k2
+
+    P.pSC.Ud[0, 0] = v
+    P.pSC.Ud[1, 0] = w
+
+    # print(np.rad2deg(phi))
+
+    if P.LadoAtaque == -1 :
+        if rho_original < 7 / 100:
+            if yr >= 0:
+                if abs(phi) < np.pi / 4:
+                    P.pSC.Ud[1, 0] = -wmax
+
+                elif -np.pi/4 > phi > -3 * np.pi / 4:
+                    P.pSC.Ud[1, 0] = wmax
+                elif np.pi/4 < phi < 3 * np.pi / 4:
+                    P.pSC.Ud[1, 0] = -wmax
+                else:
+                    k1 = gain[0]
+                    k2 = gain[1]
+                    krepulsive = k1
+                    kgk = k1
+                    phi = np.arctan2(0 - yr, -.8 - xr)
+                    alpha = normalizeAngle(- phi + yaw_r)
+                    if alpha > np.pi/2:
+                        k1 *= -1
+                        kgk *= -1
+                        krepulsive *= -1
+                        alpha -= np.pi
+                    elif alpha < -np.pi/2:
+                        k1 *= -1
+                        kgk *= -1
+                        krepulsive *= -1
+                        alpha += np.pi
+
+                    w = wmax * alpha * k2
+                    P.pSC.Ud[0, 0] = vmax * np.tanh(k1) 
+                    P.pSC.Ud[1, 0] = w
+            else:
+                if abs(phi) < np.pi / 4:
+                    P.pSC.Ud[1, 0] = wmax
+                    
+                elif -np.pi/4 > phi > -3 * np.pi / 4:
+                    P.pSC.Ud[1, 0] = wmax
+                elif np.pi/4 < phi < 3 * np.pi / 4:
+                    P.pSC.Ud[1, 0] = -wmax
+                else:
+                    k1 = gain[0]
+                    k2 = gain[1]
+                    krepulsive = k1
+                    kgk = k1
+                    phi = np.arctan2(0 - yr, -.8 - xr)
+                    alpha = normalizeAngle(- phi + yaw_r)
+                    if alpha > np.pi/2:
+                        k1 *= -1
+                        kgk *= -1
+                        krepulsive *= -1
+                        alpha -= np.pi
+                    elif alpha < -np.pi/2:
+                        k1 *= -1
+                        kgk *= -1
+                        krepulsive *= -1
+                        alpha += np.pi
+
+                    w = wmax * alpha * k2
+                    P.pSC.Ud[0, 0] = vmax * np.tanh(k1) 
+                    P.pSC.Ud[1, 0] = w
+                    
+    else: # Ataca para positivo
+        if rho_original < 7 / 100:
+            if yr >= 0:
+                if abs(phi) < np.pi / 4:
+                    k1 = gain[0]
+                    k2 = gain[1]
+                    krepulsive = k1
+                    kgk = k1
+                    phi = np.arctan2(0 - yr, .8 - xr)
+                    alpha = normalizeAngle(- phi + yaw_r)
+                    if alpha > np.pi/2:
+                        k1 *= -1
+                        kgk *= -1
+                        krepulsive *= -1
+                        alpha -= np.pi
+                    elif alpha < -np.pi/2:
+                        k1 *= -1
+                        kgk *= -1
+                        krepulsive *= -1
+                        alpha += np.pi
+
+                    w = wmax * alpha * k2
+                    P.pSC.Ud[0, 0] = vmax * np.tanh(k1) 
+                    P.pSC.Ud[1, 0] = w
+                elif -np.pi/4 > phi > -3 * np.pi / 4:
+                    P.pSC.Ud[1, 0] = -wmax
+                elif np.pi/4 < phi < 3 * np.pi / 4:
+                    P.pSC.Ud[1, 0] = wmax
+                else:
+                    P.pSC.Ud[1, 0] = wmax
+            else:
+                if abs(phi) < np.pi / 4:
+                    k1 = gain[0]
+                    k2 = gain[1]
+                    krepulsive = k1
+                    kgk = k1
+                    phi = np.arctan2(0 - yr, .8 - xr)
+                    alpha = normalizeAngle(- phi + yaw_r)
+                    if alpha > np.pi/2:
+                        k1 *= -1
+                        kgk *= -1
+                        krepulsive *= -1
+                        alpha -= np.pi
+                    elif alpha < -np.pi/2:
+                        k1 *= -1
+                        kgk *= -1
+                        krepulsive *= -1
+                        alpha += np.pi
+
+                    w = wmax * alpha * k2
+                    P.pSC.Ud[0, 0] = vmax * np.tanh(k1) 
+                    P.pSC.Ud[1, 0] = w
+                    
+                elif -np.pi/4 > phi > -3 * np.pi / 4:
+                    P.pSC.Ud[1, 0] = -wmax
+                elif np.pi/4 < phi < 3 * np.pi / 4:
+                    P.pSC.Ud[1, 0] = wmax
+                else:
+                    P.pSC.Ud[1, 0] = -wmax
+    return P
+
+
 def OfficialDefenser(P : Player, B : Player, gain = [1.5, .07]):
     vmax = P.pPar.vmax
     wmax = P.pPar.wmax
     dt = 70e-3
-
-
 
     k1 = gain[0]
     k2 = gain[1]
@@ -630,11 +840,11 @@ def OfficialDefenser(P : Player, B : Player, gain = [1.5, .07]):
     vyr = P.pPos.X[7, 0]
 
     if P.LadoAtaque == -1 :
-        center_goal = 0.60
+        center_goal = 0.72
         lim_goal = 0.56
         xd = xball + vxball * dt if xball > lim_goal else center_goal
     else:
-        center_goal = -0.60
+        center_goal = -0.72
         lim_goal = -0.56
         xd = xball + vxball * dt if xball < lim_goal else center_goal
 
@@ -660,12 +870,12 @@ def OfficialDefenser(P : Player, B : Player, gain = [1.5, .07]):
 
     rho = np.sqrt((xd-xr) ** 2 + (yd-yr) ** 2)
     rho_ball = np.sqrt((xball-xr) ** 2 + (yball-yr) ** 2)
-    #drho = ((xball - xr) * (vxball - vxr) + (yball - yr) * (vyball - vyr)) / rho
+    drho = ((xball - xr) * (vxball - vxr) + (yball - yr) * (vyball - vyr)) / rho_ball
 
     if rho < 0.15:
         rho *= 2
 
-    v = vmax * np.tanh(k1 * rho) #+ drho * 0.1
+    v = vmax * np.tanh(k1 * rho) - drho * 0.25
     w = wmax * alpha * k2
 
     P.pSC.Ud[0, 0] = v
@@ -712,6 +922,41 @@ def OfficialDefenser(P : Player, B : Player, gain = [1.5, .07]):
                 else:
                     P.pSC.Ud[1, 0] = -wmax
     return P
+
+
+def new_controller(P : Player, B : Player, gain = [1.5, .07]):
+    vmax = P.pPar.vmax
+    wmax = P.pPar.wmax
+
+    k1 = gain[0]
+    k2 = gain[1]
+    krepulsive = k1
+    kgk = k1
+    kv = 1
+
+    xball = B.pPos.X[0,0]
+    yball = B.pPos.X[1,0]
+    vxball = B.pPos.X[6, 0]
+    vyball = B.pPos.X[7, 0]
+
+    xr = P.pPos.Xc[0,0]
+    yr = P.pPos.Xc[1,0]
+    yaw_r = P.pPos.X[5,0]
+    vxr = P.pPos.X[6, 0]
+    vyr = P.pPos.X[7, 0]
+
+    phi = np.arctan2(yball - yr, xball - xr)
+    alpha = normalizeAngle(- phi + yaw_r)
+
+    xd = xball  
+    yd =  yball 
+
+    K = np.array([[np.cos(yaw_r), np.sin(yaw_r)],
+         [-np.sin(yaw_r), np.cos(yaw_r)]])
+    
+    X = np.array([[vxball + 1 * (xball - xr)],
+         [vyball + 1 * (yball - yr)]])
+    
 
 
 def distance(p1, p2):
