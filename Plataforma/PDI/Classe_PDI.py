@@ -617,7 +617,7 @@ class JanelaPDI(object):
                 while self.toc(t) < tsim:
                     if self.toc(tc) > tap:
                         tc = self.tic() 
-                        self.InicioCiclo = self.tic()               
+                        self.InicioCiclo = self.tic()
                         '-----------------------------------------------------'
                         # Data aquisition
                         if self.Var_Comunicacao:
