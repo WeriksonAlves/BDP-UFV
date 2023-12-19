@@ -28,8 +28,8 @@ class AppBDP:
         self._calibration_successful = False
 
         self.current_folder = os.path.dirname(__file__)
-        self.field_mm_image = cv2.imread(os.path.join(self.current_folder, 'Field_mm.png'))
-        self.field_px_image = cv2.imread(os.path.join(self.current_folder, 'Field_px.png'))
+        self.field_mm_image = cv2.imread(os.path.join(self.current_folder, 'Images\Field_mm.png'))
+        self.field_px_image = cv2.imread(os.path.join(self.current_folder, 'Images\Field_px.png'))
 
         self.var_ptm = np.ones((3, 3))
         self.var_kernel = np.ones((3, 3), np.uint8)
@@ -306,7 +306,7 @@ class AppBDP:
             self.clear_status_bar()
             self.set_status_bar(f"Error capturing image: {str(e)}")
 
-    def correlate_points(self):
+    def correlate_points(self): # Select the real field's points  
         """
         The function `correlate_points` performs point correlation between two sets of points and
         calculates a perspective transformation matrix.
@@ -441,7 +441,7 @@ class AppBDP:
         self.set_status_bar("Saving calibration")
 
         try:
-            np.savetxt(os.path.join(self.current_folder, 'Transformation_Matrix.txt'), self.transformation_matrix, newline='\n')
+            np.savetxt(os.path.join(self.current_folder, 'Saves_Calibration\Transformation_Matrix.txt'), self.transformation_matrix, newline='\n')
             self.clear_status_bar()
             self.set_status_bar("Calibration saved")
         except Exception as e:
